@@ -69,10 +69,20 @@ tickers:
   "Constellation Software": "CSU.TO"
   "National Bank": "NA.TO"
 
+# Only scrape and keep disclosures on or after this date. Default is the start
+# of the 45th Parliament (general election 2025-04-28; first sitting / throne
+# speech 2025-05-27). Widen or narrow the window by changing this — a change
+# re-triggers a one-time deep backfill on the next registry run.
+since_date: "2025-04-28"
 # First run walks this many list pages (30 entries/page) as a backfill;
-# later runs stop at the first fully-seen page.
+# later (incremental) runs stop at the first fully-seen page.
 backfill_pages: 60
-# Rolling cap on registry.json so the repo stays lean.
-max_records: 5000
+# One-time deep sweep depth (pages) used to pull the whole `since_date` window
+# on the first run, or after `since_date` changes. At ~1.2s/request a full
+# sweep of this many pages takes several minutes.
+deep_backfill_pages: 400
+# Rolling cap on registry.json. Sized to hold the whole 45th-Parliament window
+# (the registry covers all public office holders, not just MPs).
+max_records: 25000
 # Newsroom lookback window (days).
 news_days: 45
