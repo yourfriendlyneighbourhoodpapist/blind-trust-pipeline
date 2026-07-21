@@ -153,9 +153,18 @@ def _detect_page_param(sess) -> str:
     return "page"
 
 
-def scrape(seen_ids: set[str], max_pages: int = 40) -> list[dict]:
-    """Return records not in seen_ids, newest first. First run: bounded
-    backfill of max_pages; later runs stop at the first fully-seen page."""
+def scrape(seen_ids: set[str], max_pages: int = 40,
+           since_date: str | None = None, deep: bool = False) -> list[dict]:
+    """Return records newest-first, bounded by ``max_pages`` and (optionally) a
+    ``since_date`` floor (YYYY-MM-DD; records older than it are dropped).
+
+    Two modes:
+      * incremental (``deep=False``) — return only records not in ``seen_ids``
+        and stop at the first fully-seen page (fast daily runs);
+      * deep sweep (``deep=True``) — return every in-window record regardless of
+        ``seen_ids`` so the caller can (re)build the whole window; stops only on
+        an empty page, a page entirely older than ``since_date``, or ``max_pages``.
+    """
     sess = session()
     param = _detect_page_param(sess)
     new_records: list[dict] = []
@@ -165,9 +174,17 @@ def scrape(seen_ids: set[str], max_pages: int = 40) -> list[dict]:
         if not records:
             log.info("Page %d empty — stopping", page)
             break
-        fresh = [r for r in records if r["id"] not in seen_ids]
+        in_window = [r for r in records
+                     if not since_date or r["disclosed"] >= since_date]
+        fresh = in_window if deep else [r for r in in_window if r["id"] not in seen_ids]
         new_records.extend(fresh)
-        log.info("Page %d: %d entries, %d new", page, len(records), len(fresh))
-        if not fresh and seen_ids:
+        log.info("Page %d: %d entries, %d in-window, %d kept", page,
+                 len(records), len(in_window), len(fresh))
+        # The registry is newest-first, so once a whole page predates the floor
+        # we've walked past the window — stop.
+        if since_date and not in_window:
+            log.info("Page %d entirely older than %s — stopping", page, since_date)
+            break
+        if not deep and not fresh and seen_ids:
             break  # caught up
     return new_records
