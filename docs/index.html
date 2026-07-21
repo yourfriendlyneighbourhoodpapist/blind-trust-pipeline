@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Blind Trust — a mobile tracker for Canada's CIEC public registry of conflict-of-interest disclosures. Public data, not investment advice.">
+<title>Blind Trust — CIEC registry tracker</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#59656F;color:#FDFFFC;font-family:'General Sans','Neue Montreal',system-ui,-apple-system,sans-serif;font-feature-settings:'tnum' 1;-webkit-font-smoothing:antialiased}
+a{color:#B4D163;text-decoration:none}a:hover{color:#c7de84}
+input{font-family:inherit}
+button{font-family:inherit}
+::placeholder{color:#8C99A4}
+@keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes sheetUp{from{transform:translateY(102%)}to{transform:none}}
+@keyframes modalPop{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes dropIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+@keyframes drawLine{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;animation-delay:0ms!important;transition-duration:.001ms!important}}
+html,body{min-height:100%}
+#app{min-height:100vh}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<template id="tpl">
+<div style="position:relative;min-height:100vh;overflow-x:hidden">
+
+  <div style="position:relative;z-index:1;max-width:720px;margin:0 auto;padding:0 16px 132px">
+
+    <!-- TOP BAR -->
+    <div style="position:sticky;top:0;z-index:20;margin:0 -16px;padding:12px 16px 11px;background:rgba(0,20,0,.9);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)">
+      <div style="display:flex;align-items:center;gap:11px">
+        <svg width="36" height="36" viewBox="0 0 64 64" style="flex:none">
+          <defs><clipPath id="bt-leaf"><path d="M32 61 L30 49 L18 53 L22 42 L8 40 L18 32 L6 24 L20 22 L16 10 L28 16 L32 3 L36 16 L48 10 L44 22 L58 24 L46 32 L56 40 L42 42 L46 53 L34 49 Z"></path></clipPath></defs>
+          <path d="M32 61 L30 49 L18 53 L22 42 L8 40 L18 32 L6 24 L20 22 L16 10 L28 16 L32 3 L36 16 L48 10 L44 22 L58 24 L46 32 L56 40 L42 42 L46 53 L34 49 Z" fill="rgba(0,20,0,.5)" stroke="#B4D163" stroke-width="2" stroke-linejoin="round"></path>
+          <g clip-path="url(#bt-leaf)">
+            <line x1="21" y1="30" x2="21" y2="44" stroke="rgba(253,255,252,.45)" stroke-width="1.5"></line>
+            <rect x="18.5" y="35" width="5" height="6" rx="1" fill="rgba(253,255,252,.4)"></rect>
+            <line x1="33" y1="26" x2="33" y2="40" stroke="rgba(253,255,252,.45)" stroke-width="1.5"></line>
+            <rect x="30.5" y="30" width="5" height="6" rx="1" fill="rgba(253,255,252,.4)"></rect>
+            <line x1="45" y1="18" x2="45" y2="32" stroke="rgba(253,255,252,.45)" stroke-width="1.5"></line>
+            <rect x="42.5" y="21" width="5" height="6" rx="1" fill="rgba(253,255,252,.4)"></rect>
+            <polyline points="14,45 24,39 33,41 43,27 53,18" fill="none" stroke="#B4D163" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="stroke-dasharray:130;stroke-dashoffset:130;animation:drawLine 1.1s ease .25s forwards"></polyline>
+          </g>
+        </svg>
+        <div style="line-height:1.05">
+          <div style="font-size:18px;font-weight:600;letter-spacing:-.03em">Blind Trust</div>
+          <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8C99A4;margin-top:2px">CIEC registry tracker</div>
+        </div>
+        <div style="flex:1"></div>
+        <button onClick="{{ toggleNotif }}" style="all:unset;cursor:pointer;position:relative;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(0,20,0,.5);box-shadow:inset 0 1px 0 rgba(253,255,252,.1)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FDFFFC" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+          <sc-if value="{{ hasNotif }}"><span style="position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#B4D163;color:#001400;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ notifCount }}</span></sc-if>
+        </button>
+      </div>
+      <div style="display:flex;gap:9px;margin-top:11px">
+        <div style="flex:1;display:flex;align-items:center;gap:9px;padding:0 13px;height:42px;border-radius:13px;background:rgba(253,255,252,.07);box-shadow:inset 0 1px 0 rgba(253,255,252,.1)">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8C99A4" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line></svg>
+          <input value="{{ q }}" onInput="{{ onSearch }}" placeholder="Search names, companies, filings…" style="flex:1;min-width:0;border:none;outline:none;background:transparent;color:#FDFFFC;font-size:14px" />
+        </div>
+        <button onClick="{{ toggleFilters }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:8px;padding:0 15px;height:42px;border-radius:13px;background:rgba(253,255,252,.07);box-shadow:inset 0 1px 0 rgba(253,255,252,.1);font-size:13px;font-weight:600">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FDFFFC" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="7" y1="12" x2="17" y2="12"></line><line x1="10" y1="17" x2="14" y2="17"></line></svg>
+          Filters
+          <sc-if value="{{ hasActive }}"><span style="min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#B4D163;color:#001400;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ activeCount }}</span></sc-if>
+        </button>
+      </div>
+    </div>
+
+    <!-- QUICK CHIPS -->
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:13px 0 2px">
+      <button onClick="{{ pmChip.onClick }}" style="all:unset;cursor:pointer;padding:7px 13px;border-radius:11px;font-size:12.5px;font-weight:600;background:{{ pmChip.bg }};color:{{ pmChip.fg }};box-shadow:inset 0 1px 0 rgba(253,255,252,.08)">Prime Minister only</button>
+      <button onClick="{{ secChip.onClick }}" style="all:unset;cursor:pointer;padding:7px 13px;border-radius:11px;font-size:12.5px;font-weight:600;background:{{ secChip.bg }};color:{{ secChip.fg }};box-shadow:inset 0 1px 0 rgba(253,255,252,.08)">Securities filings only</button>
+      <sc-if value="{{ showClear }}"><button onClick="{{ clearFilters }}" style="all:unset;cursor:pointer;padding:7px 13px;border-radius:11px;font-size:12.5px;font-weight:600;background:rgba(89,101,111,.28);color:#FDFFFC">Clear filters ✕</button></sc-if>
+      <div style="flex:1"></div>
+      <span style="font-size:11px;font-weight:500;color:#8C99A4;white-space:nowrap">{{ dateNote }}</span>
+    </div>
+
+    <!-- VIEW: TAPE -->
+    <sc-if value="{{ isTape }}">
+    <div style="animation:riseIn .45s ease both">
+      <h2 style="font-size:23px;font-weight:600;letter-spacing:-.03em;margin:24px 0 2px">Most widely disclosed</h2>
+      <div style="font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#8C99A4;margin-bottom:13px">by № of filers · not $</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <sc-for list="{{ mosaic }}" as="t" hint-placeholder-count="8">
+          <div style="flex:{{ t.grow }} 1 {{ t.basis }}px;min-width:96px;height:{{ t.h }}px;border-radius:16px;padding:11px 13px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;background:{{ t.bg }};box-shadow:inset 0 1px 0 rgba(253,255,252,.1),0 12px 30px rgba(0,20,0,.34)">
+            <div style="position:absolute;top:10px;right:10px;width:22px;height:22px"><dc-import name="CompanyLogo" domain="{{ t.domain }}" ticker="{{ t.ticker }}" mono="{{ t.mono }}" hint-size="22px,22px"></dc-import></div>
+            <div>
+              <div style="font-size:18px;font-weight:600;letter-spacing:-.03em">{{ t.ticker }}</div>
+              <div style="font-size:11.5px;color:#c9c7bd;margin-top:1px">{{ t.name }}</div>
+            </div>
+            <div style="font-size:11px;font-weight:500;color:#8C99A4">{{ t.meta }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <h2 style="font-size:23px;font-weight:600;letter-spacing:-.03em;margin:28px 0 12px">Disclosure tape</h2>
+      <div style="border-radius:20px;overflow:hidden;background:linear-gradient(155deg,rgba(253,255,252,.16),rgba(253,255,252,.08));backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:inset 0 1px 0 rgba(253,255,252,.14),0 24px 60px rgba(0,20,0,.45)">
+        <div style="display:grid;grid-template-columns:1.5fr 1.4fr 1.05fr;gap:8px;padding:11px 13px;background:rgba(0,20,0,.5);font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#8C99A4">
+          <span>Stock</span><span>Politician</span><span>Event</span>
+        </div>
+        <sc-for list="{{ tape }}" as="r" hint-placeholder-count="8">
+          <div style="display:grid;grid-template-columns:1.5fr 1.4fr 1.05fr;gap:8px;align-items:center;padding:10px 13px;background:{{ r.zebra }}">
+            <div style="display:flex;align-items:center;gap:9px;min-width:0">
+              <div style="width:34px;height:34px;flex:none"><dc-import name="CompanyLogo" domain="{{ r.company.domain }}" ticker="{{ r.company.ticker }}" mono="{{ r.company.mono }}" hint-size="34px,34px"></dc-import></div>
+              <div style="min-width:0">
+                <div style="font-size:13px;font-weight:600;letter-spacing:-.02em;display:flex;align-items:center;gap:5px"><span>{{ r.company.ticker }}</span><sc-if value="{{ r.sp }}"><span style="font-size:9px;font-weight:700;color:#8C99A4;background:rgba(89,101,111,.25);padding:1px 4px;border-radius:5px">sp</span></sc-if></div>
+                <div style="font-size:11px;color:#8C99A4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.company.name }}</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;min-width:0">
+              <div style="width:30px;height:30px;flex:none"><dc-import name="Avatar" initials="{{ r.personInitials }}" ring="{{ r.personRing }}" fs="11" hint-size="30px,30px"></dc-import></div>
+              <div style="min-width:0">
+                <div onClick="{{ r.open }}" style="cursor:pointer;font-size:13px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.personName }}</div>
+                <div style="font-size:10.5px;color:#8C99A4">{{ r.roleLine }}</div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;flex:none;background:{{ r.event.dot }}"></span><span style="font-size:12px;font-weight:500">{{ r.event.label }}</span></div>
+              <div style="font-size:10.5px;color:#8C99A4;margin-top:2px">{{ r.event.date }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <p style="font-size:11.5px;line-height:1.5;color:#8C99A4;margin:14px 2px 0">{{ footTape }}</p>
+    </div>
+    </sc-if>
+
+    <!-- VIEW: HOLDINGS -->
+    <sc-if value="{{ isHoldings }}">
+    <div style="animation:riseIn .45s ease both;margin-top:22px">
+      <sc-for list="{{ holdings }}" as="c" hint-placeholder-count="4">
+        <div style="margin-bottom:15px;border-radius:20px;padding:17px 17px 15px;background:linear-gradient(155deg,rgba(253,255,252,.17),rgba(253,255,252,.09));backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:inset 0 1px 0 rgba(253,255,252,.14),0 24px 60px rgba(0,20,0,.45),0 0 0 {{ c.ringW }}px rgba(180,209,99,{{ c.ring }})">
+          <div style="display:flex;align-items:center;gap:11px">
+            <div style="width:44px;height:44px;flex:none"><dc-import name="Avatar" initials="{{ c.person.initials }}" ring="{{ c.person.ring }}" fs="15" hint-size="44px,44px"></dc-import></div>
+            <div style="flex:1;min-width:0">
+              <div onClick="{{ c.person.open }}" style="cursor:pointer;font-size:16px;font-weight:600;letter-spacing:-.02em">{{ c.person.name }}</div>
+              <div style="font-size:11px;color:#8C99A4">{{ c.person.roleLine }}</div>
+            </div>
+            <sc-if value="{{ c.hasSig }}"><span style="padding:5px 10px;border-radius:10px;background:rgba(180,209,99,.18);color:#B4D163;font-size:11px;font-weight:600;white-space:nowrap">◆ {{ c.signals }} signals</span></sc-if>
+          </div>
+
+          <sc-if value="{{ c.pmNote }}"><div style="margin-top:12px;padding:11px 13px;border-radius:13px;background:rgba(0,20,0,.4);font-size:12px;line-height:1.5;color:#c9c7bd">{{ c.pmNote }}</div></sc-if>
+
+          <sc-if value="{{ c.hasSec }}">
+            <div style="font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#8C99A4;margin:14px 0 7px">Disclosed securities</div>
+            <sc-for list="{{ c.securities }}" as="s" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 0;background:{{ s.zebra }}">
+                <div style="width:28px;height:28px;flex:none"><dc-import name="CompanyLogo" domain="{{ s.domain }}" ticker="{{ s.ticker }}" mono="{{ s.mono }}" hint-size="28px,28px"></dc-import></div>
+                <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.name }}</div><div style="font-size:10.5px;color:#8C99A4">{{ s.ticker }}</div></div>
+                <div style="display:flex;align-items:center;gap:6px"><sc-if value="{{ s.sp }}"><span style="font-size:9px;font-weight:700;color:#8C99A4;background:rgba(89,101,111,.25);padding:1px 4px;border-radius:5px">sp</span></sc-if><span style="font-size:12.5px;font-weight:600;color:{{ s.perfColor }};white-space:nowrap">{{ s.perfText }}</span></div>
+              </div>
+            </sc-for>
+          </sc-if>
+
+          <sc-if value="{{ c.hasMaterial }}">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">
+              <div>
+                <div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#B4D163;margin-bottom:7px">▲ Newly disclosed</div>
+                <sc-for list="{{ c.material.added }}" as="m" hint-placeholder-count="3"><div style="padding:4px 0"><div style="font-size:12px;font-weight:500">{{ m.name }}</div><div style="font-size:10px;color:#8C99A4">{{ m.ticker }} · {{ m.date }}</div></div></sc-for>
+                <sc-if value="{{ c.material.noneAdded }}"><div style="font-size:11.5px;color:#8C99A4">—</div></sc-if>
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#8C99A4;margin-bottom:7px">▼ No longer disclosed</div>
+                <sc-for list="{{ c.material.removed }}" as="m" hint-placeholder-count="3"><div style="padding:4px 0"><div style="font-size:12px;font-weight:500;color:#c9c7bd">{{ m.name }}</div><div style="font-size:10px;color:#8C99A4">{{ m.ticker }} · {{ m.date }}</div></div></sc-for>
+              </div>
+            </div>
+            <p style="font-size:11px;line-height:1.5;color:#8C99A4;margin:11px 0 0">{{ footNoLonger }}</p>
+          </sc-if>
+
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px">
+            <sc-for list="{{ c.tags }}" as="tg" hint-placeholder-count="2"><span style="padding:4px 9px;border-radius:9px;background:rgba(0,20,0,.4);font-size:10.5px;font-weight:500;color:#c9c7bd">{{ tg }}</span></sc-for>
+          </div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ holdingsEmpty }}"><div style="text-align:center;color:#8C99A4;font-size:13px;padding:40px 0">No filers match these filters.</div></sc-if>
+    </div>
+    </sc-if>
+
+    <!-- VIEW: SIGNALS -->
+    <sc-if value="{{ isSignals }}">
+    <div style="animation:riseIn .45s ease both;margin-top:22px">
+      <p style="font-size:13px;line-height:1.55;color:#c9c7bd;margin:0 2px 16px">{{ signalsIntro }}</p>
+      <sc-for list="{{ signals }}" as="s" hint-placeholder-count="4">
+        <div style="margin-bottom:15px;border-radius:20px;padding:17px;background:linear-gradient(155deg,rgba(253,255,252,.17),rgba(253,255,252,.09));backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:inset 0 1px 0 rgba(253,255,252,.14),0 24px 60px rgba(0,20,0,.45)">
+          <div style="display:flex;align-items:center;gap:8px;font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#8C99A4"><span>{{ s.source }}</span><span>·</span><span>{{ s.date }}</span></div>
+          <div style="font-size:16px;font-weight:600;letter-spacing:-.02em;line-height:1.32;margin:8px 0 10px;text-wrap:pretty">{{ s.title }}</div>
+          <span style="padding:4px 9px;border-radius:9px;background:rgba(180,209,99,.16);color:#B4D163;font-size:10.5px;font-weight:600">{{ s.sector }}</span>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:12px">
+            <sc-for list="{{ s.companies }}" as="co" hint-placeholder-count="3"><div style="display:flex;align-items:center;gap:6px;padding:5px 9px 5px 5px;border-radius:11px;background:rgba(0,20,0,.42)"><div style="width:22px;height:22px;flex:none"><dc-import name="CompanyLogo" domain="{{ co.domain }}" ticker="{{ co.ticker }}" mono="{{ co.mono }}" hint-size="22px,22px"></dc-import></div><span style="font-size:12px;font-weight:600">{{ co.ticker }}</span></div></sc-for>
+          </div>
+          <div style="font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#8C99A4;margin:15px 0 8px">Disclosed holders</div>
+          <sc-for list="{{ s.holders }}" as="h" hint-placeholder-count="2">
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 0">
+              <div style="width:32px;height:32px;flex:none"><dc-import name="Avatar" initials="{{ h.initials }}" ring="{{ h.ring }}" fs="12" hint-size="32px,32px"></dc-import></div>
+              <div style="flex:1;min-width:0"><div onClick="{{ h.open }}" style="cursor:pointer;font-size:13px;font-weight:600;letter-spacing:-.01em">{{ h.name }} <sc-if value="{{ h.sp }}"><span style="font-size:9px;font-weight:700;color:#8C99A4;background:rgba(89,101,111,.25);padding:1px 4px;border-radius:5px">sp</span></sc-if></div><div style="font-size:11px;color:#8C99A4">disclosed {{ h.date }}</div></div>
+              <span style="font-size:12px;font-weight:600;color:#B4D163;white-space:nowrap">{{ h.tickers }}</span>
+            </div>
+          </sc-for>
+          <sc-if value="{{ s.note }}"><div style="margin-top:10px;padding:9px 11px;border-radius:11px;background:rgba(0,20,0,.4);font-size:11.5px;line-height:1.5;color:#8C99A4">{{ s.note }}</div></sc-if>
+        </div>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <!-- VIEW: ALPHA -->
+    <sc-if value="{{ isAlpha }}">
+    <div style="animation:riseIn .45s ease both;margin-top:22px">
+      <p style="font-size:13px;line-height:1.55;color:#c9c7bd;margin:0 2px 16px">{{ alphaIntro }}</p>
+
+      <div style="margin-bottom:15px;border-radius:20px;padding:17px;background:linear-gradient(155deg,rgba(253,255,252,.17),rgba(253,255,252,.09));backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:inset 0 1px 0 rgba(253,255,252,.14),0 24px 60px rgba(0,20,0,.45)">
+        <div style="font-size:16px;font-weight:600;letter-spacing:-.02em">Government Favour Index</div>
+        <div style="font-size:11px;color:#8C99A4;margin:2px 0 14px">Composite of announcements · contracts · lobbying · insider trades</div>
+        <sc-for list="{{ gfi }}" as="g" hint-placeholder-count="6">
+          <div style="padding:7px 0">
+            <div style="display:flex;align-items:center;gap:10px"><span style="font-size:13px;font-weight:600;width:64px;flex:none">{{ g.ticker }}</span><div style="flex:1;height:10px;border-radius:6px;background:rgba(0,20,0,.45);overflow:hidden"><div style="height:100%;width:{{ g.pct }}%;border-radius:6px;background:linear-gradient(90deg,rgba(180,209,99,.6),#B4D163)"></div></div><span style="font-size:13px;font-weight:600;width:30px;text-align:right;flex:none">{{ g.score }}</span></div>
+            <sc-if value="{{ g.note }}"><div style="font-size:10.5px;color:#8C99A4;margin:4px 0 0 74px">{{ g.note }}</div></sc-if>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-bottom:15px;border-radius:20px;padding:17px;background:linear-gradient(155deg,rgba(253,255,252,.17),rgba(253,255,252,.09));backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:inset 0 1px 0 rgba(253,255,252,.14),0 24px 60px rgba(0,20,0,.45)">
+        <div style="font-size:16px;font-weight:600;letter-spacing:-.02em">SEDI — insider transactions</div>
+        <div style="font-size:11px;color:#8C99A4;margin:2px 0 12px">In disclosed holdings · real trade dates + values</div>
+        <sc-for list="{{ sedi }}" as="x" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:auto 62px 1fr auto;gap:9px;align-items:center;padding:8px 0;background:{{ x.zebra }}">
+            <span style="font-size:11px;color:#8C99A4;white-space:nowrap">{{ x.date }}</span>
+            <span style="font-size:12.5px;font-weight:600">{{ x.ticker }}</span>
+            <span style="font-size:11.5px;color:#c9c7bd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ x.role }}</span>
+            <span style="font-size:12px;font-weight:600;color:{{ x.color }};text-align:right;white-space:nowrap">{{ x.action }} {{ x.amount }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-bottom:15px;border-radius:20px;padding:17px;background:linear-gradient(155deg,rgba(253,255,252,.17),rgba(253,255,252,.09));backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:inset 0 1px 0 rgba(253,255,252,.14),0 24px 60px rgba(0,20,0,.45)">
+        <div style="font-size:16px;font-weight:600;letter-spacing:-.02em">Registry of Lobbyists</div>
+        <div style="font-size:11px;color:#8C99A4;margin:2px 0 14px">Lobbying intensity · communications, last 90 days</div>
+        <sc-for list="{{ lobby }}" as="l" hint-placeholder-count="6">
+          <div style="display:flex;align-items:center;gap:10px;padding:6px 0">
+            <div style="width:26px;height:26px;flex:none"><dc-import name="CompanyLogo" domain="{{ l.domain }}" ticker="{{ l.name }}" mono="{{ l.mono }}" hint-size="26px,26px"></dc-import></div>
+            <div style="width:78px;flex:none;min-width:0"><div style="font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ l.name }}</div><sc-if value="{{ l.note }}"><div style="font-size:9.5px;color:#8C99A4;white-space:nowrap">{{ l.note }}</div></sc-if></div>
+            <div style="flex:1;height:10px;border-radius:6px;background:rgba(0,20,0,.45);overflow:hidden"><div style="height:100%;width:{{ l.pct }}%;border-radius:6px;background:linear-gradient(90deg,rgba(89,101,111,.5),#8C99A4)"></div></div>
+            <span style="font-size:13px;font-weight:600;width:26px;text-align:right;flex:none">{{ l.count }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-bottom:15px;border-radius:20px;padding:17px;background:linear-gradient(155deg,rgba(253,255,252,.17),rgba(253,255,252,.09));backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:inset 0 1px 0 rgba(253,255,252,.14),0 24px 60px rgba(0,20,0,.45)">
+        <div style="font-size:16px;font-weight:600;letter-spacing:-.02em">CanadaBuys — contract awards</div>
+        <div style="font-size:11px;color:#8C99A4;margin:2px 0 12px">Federal contracts awarded to public companies</div>
+        <sc-for list="{{ contracts }}" as="k" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 0;background:{{ k.zebra }}">
+            <div style="width:30px;height:30px;flex:none"><dc-import name="CompanyLogo" domain="{{ k.domain }}" ticker="{{ k.co }}" mono="{{ k.mono }}" hint-size="30px,30px"></dc-import></div>
+            <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600">{{ k.co }} · {{ k.dept }}</div><div style="font-size:10.5px;color:#8C99A4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ k.desc }} · {{ k.date }}</div></div>
+            <span style="font-size:13px;font-weight:600;color:#B4D163;white-space:nowrap">{{ k.amt }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- VIEW: FILINGS -->
+    <sc-if value="{{ isFilings }}">
+    <div style="animation:riseIn .45s ease both;margin-top:22px">
+      <sc-for list="{{ filings }}" as="f" hint-placeholder-count="6">
+        <div style="margin-bottom:14px;border-radius:20px;padding:16px 17px;background:linear-gradient(155deg,rgba(253,255,252,.17),rgba(253,255,252,.09));backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:inset 0 1px 0 rgba(253,255,252,.14),0 24px 60px rgba(0,20,0,.45)">
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <div style="flex:1;font-size:15px;font-weight:600;letter-spacing:-.02em;line-height:1.3">{{ f.title }}</div>
+            <span style="font-size:10.5px;font-weight:600;color:{{ f.statusColor }};white-space:nowrap;padding-top:2px">{{ f.status }}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:9px;margin-top:11px">
+            <div style="width:32px;height:32px;flex:none"><dc-import name="Avatar" initials="{{ f.person.initials }}" ring="{{ f.person.ring }}" fs="12" hint-size="32px,32px"></dc-import></div>
+            <div style="flex:1;min-width:0"><div onClick="{{ f.person.open }}" style="cursor:pointer;font-size:13px;font-weight:600;letter-spacing:-.01em">{{ f.person.name }}</div><div style="font-size:10.5px;color:#8C99A4">{{ f.person.roleLine }} · {{ f.date }}</div></div>
+          </div>
+          <sc-if value="{{ f.hasChips }}"><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:11px"><sc-for list="{{ f.chips }}" as="ch" hint-placeholder-count="2"><span style="padding:4px 9px;border-radius:9px;font-size:10.5px;font-weight:600;background:{{ ch.bg }};color:{{ ch.fg }}">{{ ch.label }}</span></sc-for></div></sc-if>
+          <sc-if value="{{ f.hasLines }}"><div style="margin-top:12px;display:flex;flex-direction:column;gap:8px"><sc-for list="{{ f.lines }}" as="ln" hint-placeholder-count="2"><div><div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#8C99A4">{{ ln.label }}</div><div style="font-size:12.5px;line-height:1.45;color:#e6e5dc;margin-top:2px">{{ ln.value }}</div></div></sc-for></div></sc-if>
+          <sc-if value="{{ f.hasChanges }}">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:13px">
+              <sc-if value="{{ f.hasAdded }}"><div><div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#B4D163;margin-bottom:6px">▲ Newly disclosed</div><sc-for list="{{ f.added }}" as="a" hint-placeholder-count="3"><div style="font-size:12px;padding:3px 0">{{ a.name }} <span style="color:#8C99A4">{{ a.ticker }}</span></div></sc-for></div></sc-if>
+              <sc-if value="{{ f.hasRemoved }}"><div><div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#8C99A4;margin-bottom:6px">▼ No longer disclosed</div><sc-for list="{{ f.removed }}" as="rm" hint-placeholder-count="3"><div style="font-size:12px;padding:3px 0;color:#c9c7bd">{{ rm.name }} <span style="color:#8C99A4">{{ rm.ticker }}</span></div></sc-for></div></sc-if>
+            </div>
+          </sc-if>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:13px">
+            <sc-for list="{{ f.tags }}" as="tg" hint-placeholder-count="3"><span style="padding:4px 9px;border-radius:9px;background:rgba(0,20,0,.42);font-size:10.5px;font-weight:500;color:#c9c7bd">{{ tg }}</span></sc-for>
+          </div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ filingsEmpty }}"><div style="text-align:center;color:#8C99A4;font-size:13px;padding:40px 0">No filings match these filters.</div></sc-if>
+    </div>
+    </sc-if>
+
+    <!-- FOOTER -->
+    <p style="font-size:10.5px;line-height:1.6;color:#6f7a5e;margin:26px 2px 0;text-wrap:pretty">{{ footer }}</p>
+  </div>
+
+  <!-- DOCK -->
+  <div style="position:fixed;left:0;right:0;bottom:16px;z-index:30;display:flex;justify-content:center;pointer-events:none">
+    <div style="pointer-events:auto;display:flex;gap:3px;padding:7px;background:rgba(253,255,252,.16);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-radius:22px;box-shadow:inset 0 1px 0 rgba(253,255,252,.28),0 20px 50px rgba(0,20,0,.4)">
+      <button onClick="{{ nav.tape.go }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 13px;border-radius:15px;transition:background .25s,color .25s;background:{{ nav.tape.bg }};color:{{ nav.tape.fg }}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="14" y2="17"></line></svg><span style="font-size:10px;font-weight:600;letter-spacing:.01em">Tape</span></button>
+      <button onClick="{{ nav.holdings.go }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 13px;border-radius:15px;transition:background .25s,color .25s;background:{{ nav.holdings.bg }};color:{{ nav.holdings.fg }}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="6" rx="2"></rect><rect x="3" y="13" width="18" height="6" rx="2"></rect></svg><span style="font-size:10px;font-weight:600;letter-spacing:.01em">Holdings</span></button>
+      <button onClick="{{ nav.signals.go }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 13px;border-radius:15px;transition:background .25s,color .25s;background:{{ nav.signals.bg }};color:{{ nav.signals.fg }}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"></circle></svg><span style="font-size:10px;font-weight:600;letter-spacing:.01em">Signals</span></button>
+      <button onClick="{{ nav.alpha.go }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 13px;border-radius:15px;transition:background .25s,color .25s;background:{{ nav.alpha.bg }};color:{{ nav.alpha.fg }}"><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="4" y="12" width="3.6" height="8" rx="1"></rect><rect x="10.2" y="8" width="3.6" height="12" rx="1"></rect><rect x="16.4" y="4" width="3.6" height="16" rx="1"></rect></svg><span style="font-size:10px;font-weight:600;letter-spacing:.01em">Alpha</span></button>
+      <button onClick="{{ nav.filings.go }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 13px;border-radius:15px;transition:background .25s,color .25s;background:{{ nav.filings.bg }};color:{{ nav.filings.fg }}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="3" width="14" height="18" rx="2"></rect><line x1="8" y1="8" x2="16" y2="8"></line><line x1="8" y1="12" x2="16" y2="12"></line><line x1="8" y1="16" x2="13" y2="16"></line></svg><span style="font-size:10px;font-weight:600;letter-spacing:.01em">Filings</span></button>
+    </div>
+  </div>
+
+  <!-- NOTIFICATIONS -->
+  <sc-if value="{{ showNotif }}">
+    <div onClick="{{ closeNotif }}" style="position:fixed;inset:0;z-index:40"></div>
+    <div style="position:fixed;top:64px;right:16px;z-index:41;width:min(340px,calc(100vw - 32px));max-height:70vh;overflow-y:auto;border-radius:20px;padding:6px;background:rgba(253,255,252,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 30px 80px rgba(0,20,0,.6);animation:dropIn .22s ease both">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 12px 8px">
+        <div style="font-size:13px;font-weight:600;color:#001400">New since last visit</div>
+        <button onClick="{{ markAll }}" style="all:unset;cursor:pointer;font-size:11.5px;font-weight:600;color:#3a5a12">Mark all read</button>
+      </div>
+      <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="5">
+        <div onClick="{{ n.open }}" style="cursor:pointer;display:flex;align-items:flex-start;gap:9px;padding:9px 12px;border-radius:12px;background:{{ n.zebra }}">
+          <span style="width:8px;height:8px;border-radius:50%;margin-top:5px;flex:none;background:{{ n.dot }}"></span>
+          <div style="min-width:0"><div style="font-size:12.5px;font-weight:600;color:#001400">{{ n.name }}</div><div style="font-size:11.5px;color:#59656F">{{ n.type }} · {{ n.date }}</div></div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <!-- FILTER SHEET -->
+  <sc-if value="{{ showFilters }}">
+    <div onClick="{{ closeFilters }}" style="position:fixed;inset:0;z-index:50;background:rgba(0,20,0,.55);animation:fadeIn .2s ease both"></div>
+    <div style="position:fixed;left:0;right:0;bottom:0;z-index:51;max-width:600px;margin:0 auto;max-height:86vh;display:flex;flex-direction:column;border-radius:26px 26px 0 0;background:rgba(253,255,252,.98);box-shadow:0 -20px 80px rgba(0,20,0,.6);animation:sheetUp .32s cubic-bezier(.2,.9,.3,1) both;color:#001400">
+      <div style="display:flex;align-items:center;justify-content:center;padding:12px 0 4px"><div style="width:38px;height:4px;border-radius:3px;background:rgba(0,20,0,.18)"></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 20px 12px">
+        <button onClick="{{ clearFilters }}" style="all:unset;cursor:pointer;font-size:13px;font-weight:600;color:#59656F">Clear all</button>
+        <div style="font-size:16px;font-weight:600;letter-spacing:-.02em">Filters</div>
+        <button onClick="{{ closeFilters }}" style="all:unset;cursor:pointer;font-size:13px;font-weight:700;color:#3a5a12">Done</button>
+      </div>
+      <div style="overflow-y:auto;padding:4px 20px 26px">
+        <sc-for list="{{ groups }}" as="grp" hint-placeholder-count="4">
+          <div style="margin-bottom:18px">
+            <div style="font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#59656F;margin-bottom:9px">{{ grp.title }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:7px">
+              <sc-for list="{{ grp.opts }}" as="o" hint-placeholder-count="4"><button onClick="{{ o.onClick }}" style="all:unset;cursor:pointer;padding:7px 12px;border-radius:10px;font-size:12.5px;font-weight:500;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button></sc-for>
+            </div>
+          </div>
+        </sc-for>
+        <div style="margin-bottom:18px">
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#59656F;margin-bottom:9px">Disclosed between</div>
+          <div style="display:flex;gap:10px">
+            <input type="date" value="{{ dateFrom }}" onInput="{{ onDateFrom }}" style="flex:1;border:none;outline:none;background:rgba(0,20,0,.06);border-radius:10px;padding:9px 11px;font-size:13px;color:#001400" />
+            <input type="date" value="{{ dateTo }}" onInput="{{ onDateTo }}" style="flex:1;border:none;outline:none;background:rgba(0,20,0,.06);border-radius:10px;padding:9px 11px;font-size:13px;color:#001400" />
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#59656F;margin-bottom:9px">Avatar ring legend · party</div>
+          <div style="display:flex;flex-wrap:wrap;gap:12px">
+            <sc-for list="{{ legend }}" as="lg" hint-placeholder-count="6"><div style="display:flex;align-items:center;gap:7px"><span style="width:14px;height:14px;border-radius:50%;background:#001400;box-shadow:0 0 0 2.5px {{ lg.color }}"></span><span style="font-size:12px;color:#001400">{{ lg.label }}</span></div></sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- PROFILE MODAL -->
+  <sc-if value="{{ hasProfile }}">
+    <div onClick="{{ closeProfile }}" style="position:fixed;inset:0;z-index:60;background:rgba(0,20,0,.6);animation:fadeIn .2s ease both;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto">
+      <div onClick="{{ stop }}" style="position:relative;width:100%;max-width:560px;border-radius:24px;background:rgba(253,255,252,.98);box-shadow:0 40px 100px rgba(0,20,0,.65);animation:modalPop .28s cubic-bezier(.2,.9,.3,1) both;color:#001400;padding:22px;margin-bottom:40px">
+        <button onClick="{{ closeProfile }}" style="all:unset;cursor:pointer;position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(0,20,0,.06);font-size:16px;color:#59656F">✕</button>
+        <div style="display:flex;align-items:center;gap:13px;padding-right:34px">
+          <div style="width:48px;height:48px;flex:none"><dc-import name="Avatar" initials="{{ prof.initials }}" ring="{{ prof.ring }}" fs="18" hint-size="48px,48px"></dc-import></div>
+          <div><div style="font-size:19px;font-weight:600;letter-spacing:-.02em">{{ prof.name }}</div><div style="font-size:12px;color:#59656F">{{ prof.title }}</div></div>
+        </div>
+        <div style="margin-top:14px;padding:12px 14px;border-radius:14px;background:rgba(39,59,9,.07);font-size:12.5px;line-height:1.55;color:#2a3410">{{ prof.bio }}</div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <sc-for list="{{ prof.stats }}" as="st" hint-placeholder-count="5"><div style="flex:1;text-align:center;padding:10px 4px;border-radius:12px;background:rgba(0,20,0,.05)"><div style="font-size:19px;font-weight:600;letter-spacing:-.02em">{{ st.v }}</div><div style="font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#59656F;margin-top:2px">{{ st.k }}</div></div></sc-for>
+        </div>
+
+        <sc-if value="{{ prof.hasSec }}">
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#59656F;margin:18px 0 8px">Disclosed securities</div>
+          <sc-for list="{{ prof.securities }}" as="s" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px solid rgba(0,20,0,.06)">
+              <div style="width:28px;height:28px;flex:none"><dc-import name="CompanyLogo" domain="{{ s.domain }}" ticker="{{ s.ticker }}" mono="{{ s.mono }}" hint-size="28px,28px"></dc-import></div>
+              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:500;color:#001400">{{ s.name }}</div><div style="font-size:10.5px;color:#59656F">{{ s.ticker }} · disclosed {{ s.date }}</div></div>
+              <div style="display:flex;align-items:center;gap:6px"><sc-if value="{{ s.sp }}"><span style="font-size:9px;font-weight:700;color:#59656F;background:rgba(89,101,111,.18);padding:1px 4px;border-radius:5px">sp</span></sc-if><span style="font-size:12.5px;font-weight:600;color:{{ s.perfDark }};white-space:nowrap">{{ s.perfText }}</span></div>
+            </div>
+          </sc-for>
+          <p style="font-size:10.5px;line-height:1.55;color:#59656F;margin:9px 0 0">{{ footProfile }}</p>
+        </sc-if>
+
+        <sc-if value="{{ prof.hasMaterial }}">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+            <div><div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#3a5a12;margin-bottom:6px">▲ Newly disclosed</div><sc-for list="{{ prof.material.added }}" as="m" hint-placeholder-count="3"><div style="font-size:12px;padding:3px 0">{{ m.name }} <span style="color:#59656F">{{ m.ticker }}</span></div></sc-for><sc-if value="{{ prof.material.noneAdded }}"><div style="font-size:11.5px;color:#59656F">—</div></sc-if></div>
+            <div><div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#59656F;margin-bottom:6px">▼ No longer disclosed</div><sc-for list="{{ prof.material.removed }}" as="m" hint-placeholder-count="3"><div style="font-size:12px;padding:3px 0;color:#3f4a2a">{{ m.name }} <span style="color:#59656F">{{ m.ticker }}</span></div></sc-for></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ prof.hasOther }}">
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#59656F;margin:18px 0 8px">Other assets &amp; interests</div>
+          <sc-for list="{{ prof.other }}" as="o" hint-placeholder-count="3"><div style="font-size:12.5px;line-height:1.45;padding:5px 0;color:#2a3410;border-top:1px solid rgba(0,20,0,.06)">{{ o }}</div></sc-for>
+        </sc-if>
+
+        <div style="font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#59656F;margin:18px 0 8px">Filings</div>
+        <sc-for list="{{ prof.filings }}" as="fl" hint-placeholder-count="2"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid rgba(0,20,0,.06)"><div><div style="font-size:12.5px;font-weight:500;color:#001400">{{ fl.type }}</div><div style="font-size:10.5px;color:#59656F">{{ fl.date }}</div></div><span style="font-size:10.5px;font-weight:600;color:{{ fl.color }};white-space:nowrap">{{ fl.status }}</span></div></sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</template>
+
+<script>
+/* ------------------------------------------------------------------ *
+ * Blind Trust — self-contained runtime.
+ *
+ * The source of this page is a Claude Design comp (Blind Trust.dc.html)
+ * that targets the Design runtime: {{ }} bindings, <sc-if>/<sc-for>
+ * control flow, and <dc-import> components (CompanyLogo, Avatar). This
+ * file reimplements just enough of that runtime — a tiny template
+ * interpreter, the two imported components, and a DCLogic base class —
+ * so the comp runs as a plain, dependency-free web app. The component
+ * logic below (class Component extends DCLogic) is the comp's own code,
+ * unchanged: it fetches this repo's live pipeline JSON and falls back to
+ * baked sample data.
+ * ------------------------------------------------------------------ */
+(function () {
+  'use strict';
+
+  /* ---- expression + binding helpers ---- */
+
+  // Resolve a dotted path ("r.company.ticker") against a scope. Scopes are
+  // chained with Object.create, so a plain property read walks to outer
+  // loop variables and the root binding object automatically.
+  function resolve(expr, scope) {
+    var parts = String(expr).trim().split('.');
+    var v = scope;
+    for (var i = 0; i < parts.length; i++) {
+      if (v == null) return undefined;
+      v = v[parts[i]];
+    }
+    return v;
+  }
+
+  var TOKEN = /\{\{\s*([^}]+?)\s*\}\}/g;
+
+  // Replace every {{ token }} in a string with its resolved value.
+  function subst(str, scope) {
+    return String(str).replace(TOKEN, function (_, e) {
+      var v = resolve(e, scope);
+      return v == null ? '' : String(v);
+    });
+  }
+
+  // A string that is exactly one {{ token }} -> return the raw value
+  // (used for handler attributes, which resolve to functions).
+  function soleToken(str) {
+    var m = /^\{\{\s*([^}]+?)\s*\}\}$/.exec(String(str).trim());
+    return m ? m[1] : null;
+  }
+
+  var HANDLERS = { onclick: 'click', oninput: 'input', onchange: 'change', onsubmit: 'submit' };
+  var SKIP_ATTR = { 'hint-placeholder-count': 1, 'hint-size': 1 };
+
+  /* ---- imported components ---- */
+
+  var TILE_BG = ['#2c3a1d', '#33302a', '#22303f', '#392b2b', '#2a3630', '#38331f', '#28323a', '#2f2a38'];
+  function hashStr(s) {
+    var h = 0;
+    s = s || '';
+    for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) >>> 0; }
+    return h;
+  }
+
+  // CompanyLogo: a rounded tile with a monogram, overlaid by the company's
+  // real logo (Clearbit) once/if it loads. Fills its fixed-size parent.
+  function logoEl(domain, ticker, mono, size) {
+    var wrap = document.createElement('div');
+    var radius = Math.max(5, Math.round(size * 0.28));
+    wrap.setAttribute('style',
+      'position:relative;width:100%;height:100%;border-radius:' + radius +
+      'px;overflow:hidden;display:flex;align-items:center;justify-content:center;' +
+      'background:' + TILE_BG[hashStr(ticker || mono || domain) % TILE_BG.length] +
+      ';box-shadow:inset 0 1px 0 rgba(253,255,252,.12),inset 0 0 0 1px rgba(0,20,0,.25)');
+    var glyph = document.createElement('span');
+    glyph.textContent = mono || '?';
+    glyph.setAttribute('style',
+      'font-weight:700;letter-spacing:-.02em;color:#e9ede0;font-size:' +
+      Math.max(9, Math.round(size * 0.4)) + 'px;line-height:1');
+    wrap.appendChild(glyph);
+    if (domain) {
+      var img = document.createElement('img');
+      img.alt = '';
+      img.setAttribute('loading', 'lazy');
+      img.setAttribute('style',
+        'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;' +
+        'background:#fff;padding:' + Math.max(1, Math.round(size * 0.13)) +
+        'px;opacity:0;transition:opacity .2s ease');
+      img.onload = function () { img.style.opacity = '1'; };
+      img.onerror = function () { if (img.parentNode) img.parentNode.removeChild(img); };
+      img.src = 'https://logo.clearbit.com/' + encodeURIComponent(domain);
+      wrap.appendChild(img);
+    }
+    return wrap;
+  }
+
+  // Avatar: initials on a dark disc with a party-coloured ring.
+  function avatarEl(initials, ring, fs) {
+    var el = document.createElement('div');
+    el.setAttribute('style',
+      'width:100%;height:100%;border-radius:50%;display:flex;align-items:center;' +
+      'justify-content:center;background:linear-gradient(160deg,#12240f,#0a1408);' +
+      'color:#FDFFFC;font-weight:600;letter-spacing:.01em;font-size:' + (fs || 12) +
+      'px;box-shadow:0 0 0 2px ' + (ring || '#8C99A4') +
+      ',inset 0 0 0 1px rgba(253,255,252,.08)');
+    el.textContent = initials || '?';
+    return el;
+  }
+
+  function buildImport(node, scope) {
+    var name = node.getAttribute('name');
+    var size = parseFloat((node.getAttribute('hint-size') || '32px').split(',')[0]) || 32;
+    var a = function (n) { var r = node.getAttribute(n); return r == null ? '' : subst(r, scope); };
+    if (name === 'Avatar') {
+      return avatarEl(a('initials'), a('ring'), parseFloat(a('fs')) || Math.round(size * 0.38));
+    }
+    // CompanyLogo
+    return logoEl(a('domain'), a('ticker'), a('mono'), size);
+  }
+
+  /* ---- the interpreter ---- */
+
+  // Render one template node against a scope; returns an array of DOM nodes
+  // (0..n) to splice into the parent's child list.
+  function renderNode(node, scope) {
+    // text
+    if (node.nodeType === 3) {
+      var t = node.nodeValue;
+      return t.indexOf('{{') === -1
+        ? [document.createTextNode(t)]
+        : [document.createTextNode(subst(t, scope))];
+    }
+    if (node.nodeType !== 1) return []; // comments, etc.
+
+    var tag = node.tagName.toLowerCase();
+
+    if (tag === 'sc-if') {
+      return resolve(soleToken(node.getAttribute('value')) || '', scope)
+        ? renderChildren(node, scope)
+        : [];
+    }
+
+    if (tag === 'sc-for') {
+      var list = resolve(soleToken(node.getAttribute('list')) || '', scope) || [];
+      var as = node.getAttribute('as');
+      var out = [];
+      for (var i = 0; i < list.length; i++) {
+        var s = Object.create(scope);
+        s[as] = list[i];
+        s[as + '_index'] = i;
+        var kids = renderChildren(node, s);
+        for (var k = 0; k < kids.length; k++) out.push(kids[k]);
+      }
+      return out;
+    }
+
+    if (tag === 'dc-import') return [buildImport(node, scope)];
+
+    // Inline SVG: no bindings live inside any SVG in this comp, so clone it
+    // wholesale — that preserves the SVG namespace and its animations.
+    if (tag === 'svg') return [node.cloneNode(true)];
+
+    // ordinary element
+    var el = node.cloneNode(false);
+    var attrs = node.attributes;
+    for (var j = 0; j < attrs.length; j++) {
+      var an = attrs[j].name, av = attrs[j].value;
+      if (SKIP_ATTR[an]) continue;
+      if (HANDLERS[an]) {
+        var tok = soleToken(av);
+        var fn = tok && resolve(tok, scope);
+        if (typeof fn === 'function') el.addEventListener(HANDLERS[an], fn);
+        el.removeAttribute(an);
+        continue;
+      }
+      if (an === 'value') {
+        var vtok = soleToken(av);
+        el.value = subst(av, scope);
+        if (vtok) el.setAttribute('data-focus-key', vtok); // for focus restore
+        el.removeAttribute('value');
+        continue;
+      }
+      el.setAttribute(an, av.indexOf('{{') === -1 ? av : subst(av, scope));
+    }
+    var childOut = renderChildren(node, scope);
+    for (var c = 0; c < childOut.length; c++) el.appendChild(childOut[c]);
+    return [el];
+  }
+
+  function renderChildren(node, scope) {
+    var out = [];
+    var kids = node.childNodes;
+    for (var i = 0; i < kids.length; i++) {
+      var r = renderNode(kids[i], scope);
+      for (var j = 0; j < r.length; j++) out.push(r[j]);
+    }
+    return out;
+  }
+
+  /* ---- focus preservation across full re-renders ---- */
+
+  function captureFocus() {
+    var a = document.activeElement;
+    if (a && a.dataset && a.dataset.focusKey) {
+      return { key: a.dataset.focusKey, start: a.selectionStart, end: a.selectionEnd };
+    }
+    return null;
+  }
+  function restoreFocus(f) {
+    if (!f) return;
+    var el = document.querySelector('[data-focus-key="' + f.key + '"]');
+    if (!el) return;
+    el.focus();
+    try { if (f.start != null) el.setSelectionRange(f.start, f.end); } catch (e) {}
+  }
+
+  /* ---- mount ---- */
+
+  var TPL = null;
+  function renderApp(inst) {
+    if (!TPL) TPL = document.getElementById('tpl').content.firstElementChild;
+    var vals = inst.renderVals();
+    var f = captureFocus();
+    var root = renderNode(TPL, vals)[0];
+    document.getElementById('app').replaceChildren(root);
+    restoreFocus(f);
+  }
+
+  // Base class standing in for the Design runtime's DCLogic.
+  window.DCLogic = class DCLogic {
+    constructor(props) { this.props = props || {}; }
+    setState(update) {
+      var patch = typeof update === 'function' ? update(this.state) : update;
+      this.state = Object.assign({}, this.state, patch);
+      if (this._rerender) this._rerender();
+    }
+    forceUpdate() { if (this._rerender) this._rerender(); }
+  };
+
+  // Component (the comp's own logic) is defined immediately after this file
+  // is concatenated; expose the mount entry point it will call.
+  window.__mountBlindTrust = function (Component) {
+    var inst = new Component({ liveData: true, defaultView: 'Tape', zebraStripes: true });
+    inst._rerender = function () { renderApp(inst); };
+    renderApp(inst);
+    if (typeof inst.componentDidMount === 'function') inst.componentDidMount();
+  };
+})();
+
+
+class Component extends DCLogic {
+  state = { view:'tape', showFilters:false, showNotif:false, profileId:null, q:'', pmOnly:false, secOnly:false, declType:'All', otherDoc:'All', role:'All', status:'All', sortBy:'Disclosure date', order:'desc', dateFrom:'', dateTo:'', notifRead:false };
+
+  constructor(props){ super(props); const m={Tape:'tape',Holdings:'holdings',Signals:'signals',Alpha:'alpha',Filings:'filings'}; const dv=m[props&&props.defaultView]; if(dv) this.state.view=dv; this.state.dataSource='sample'; }
+
+  BASE = 'https://raw.githubusercontent.com/yourfriendlyneighbourhoodpapist/blind-trust-pipeline/main/data/';
+  NAME2TICKER = {
+    'suncor energy':'SU.TO','enbridge':'ENB.TO','canadian natural resources':'CNQ.TO','canadian natural':'CNQ.TO','brookfield corporation':'BN.TO','brookfield corp':'BN.TO','brookfield asset management':'BAM','royal bank of canada':'RY.TO','bank of montreal':'BMO.TO','canadian imperial bank of commerce':'CM.TO','toronto-dominion bank':'TD.TO','toronto dominion bank':'TD.TO','bank of nova scotia':'BNS.TO','canadian national railway':'CNR.TO','canadian national railway company':'CNR.TO','canadian pacific kansas city limited':'CP.TO','amazon.com inc':'AMZN','amazon.com, inc':'AMZN','amazon':'AMZN','tesla':'TSLA','tesla inc':'TSLA','apple inc':'AAPL','rio tinto':'RIO','rio tinto plc sp/adr':'RIO','restaurant brands international inc':'QSR.TO','toromont industries ltd':'TIH.TO','telus corporation':'T.TO','telus corp':'T.TO','nutrien ltd':'NTR.TO','cameco corporation':'CCO.TO','alimentation couche-tard inc':'ATD.TO','alimentation couche-tard':'ATD.TO','dollarama':'DOL.TO','element fleet management corporation':'EFN.TO','intact financial corp':'IFC.TO','pembina pipeline corp':'PPL.TO','keyera corp':'KEY.TO','constellation software inc':'CSU.TO','thomson reuters corp-new':'TRI.TO','cgi inc':'GIB.A.TO','power corporation of canada':'POW.TO','wsp global inc':'WSP.TO','teck resources ltd':'TECK.B.TO','bce inc':'BCE.TO','medtronic':'MDT','starbucks':'SBUX','kimberly-clark':'KMB','cenovus':'CVE.TO','cenovus energy inc':'CVE.TO','micron':'MU','kkr':'KKR','wells fargo':'WFC','bank of america':'BAC','ups':'UPS','teva':'TEVA','stanley black & decker':'SWK','linamar':'LNR.TO','harley-davidson':'HOG','ge aerospace':'GE','alcoa':'AA','cae':'CAE.TO','cae inc':'CAE.TO','bombardier':'BBD.B.TO','nvidia':'NVDA'
+  };
+  EXTRA_DOMAINS = { 'TSLA':'tesla.com','AAPL':'apple.com','BNS.TO':'scotiabank.com','T.TO':'telus.com','NTR.TO':'nutrien.com','CCO.TO':'cameco.com','IFC.TO':'intactfc.com','PPL.TO':'pembina.com','KEY.TO':'keyera.com','CSU.TO':'csisoftware.com','TRI.TO':'thomsonreuters.com','GIB.A.TO':'cgi.com','POW.TO':'powercorporation.com','WSP.TO':'wsp.com','TECK.B.TO':'teck.com','BCE.TO':'bce.ca','NVDA':'nvidia.com' };
+  PARTY_OVR = { 'Mark Carney':'L','Annie Koutrakis':'L','Fayçal El-Khoury':'L','Tim Hodgson':'L','Dominic LeBlanc':'L','François-Philippe Champagne':'L','Gary Anandasangaree':'L','Peter Fonseca':'L','Jeff Costen':'L','Mélanie Joly':'L','Marc Miller':'L','Maninder Sidhu':'L','Eleanor Olszewski':'L','Karina Gould':'L','Terry Beech':'L','Adam van Koeverden':'L','James Maloney':'L','Roman Baber':'C','Greg McLean':'C','Frank Caputo':'C','John Williamson':'C','Dane Lloyd':'C','Tamara Kronis':'C','Aaron Gunn':'C','Marcus Powlowski':'L','Yves Perron':'BQ','Lori Idlout':'NDP','Michael Coteau':'L' };
+  BAKED_BIOS = {
+    'Mark Carney':'Prime Minister since March 2025. Former Governor of the Bank of Canada and Bank of England; former chair of Brookfield Asset Management and board member at Stripe. Assets held in a blind trust with conflict-of-interest screens administered by his chief of staff.',
+    'Annie Koutrakis':"Liberal MP for Vimy, first elected 2019. Disclosed holdings are primarily her spouse's brokerage portfolio, restated by material change in July 2026.",
+    'Fayçal El-Khoury':"First elected 2015. Engineer and businessman. Filings centre on two family trusts and his spouse's portfolio and dental-clinic corporation.",
+    'Tim Hodgson':'Former CEO of Goldman Sachs Canada and chair of Hydro One.',
+  };
+
+  getJSON(u){ return fetch(u).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }); }
+
+  componentDidMount(){
+    if (this.props && this.props.liveData === false) return;
+    this.setState({ dataSource:'loading' });
+    Promise.all([
+      this.getJSON(this.BASE+'prices.json').catch(()=>null),
+      this.getJSON(this.BASE+'holdings.json'),
+      this.getJSON(this.BASE+'tape.json'),
+      this.getJSON(this.BASE+'signals.json').catch(()=>null),
+      this.getJSON(this.BASE+'alpha.json').catch(()=>null),
+    ]).then(([prices, holdings, tape, signals, alpha]) => {
+      this.applyLive({ prices, holdings, tape, signals, alpha });
+      this.setState({ dataSource:'live' });
+    }).catch(e => { console.warn('Blind Trust: live pipeline unavailable, using sample data.', e); this.setState({ dataSource:'sample' }); });
+  }
+
+  _slug(n){ return (n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'x'; }
+  _inits(n){ const p=(n||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/\s+/).filter(Boolean); if(!p.length) return '?'; const a=p[0][0]||''; const b=p.length>1?p[p.length-1][0]:''; return (a+b).toUpperCase(); }
+  _norm(s){ return (s||'').toLowerCase().replace(/\(spouse\)/g,'').replace(/[.,]/g,'').replace(/\b(inc|ltd|corp|corporation|company|limited|the|plc|co)\b/g,'').replace(/\s+/g,' ').trim(); }
+  _isSp(s){ return /spouse/i.test(s||''); }
+  _tickerFor(s, tk){ if(tk) return tk; const n=this._norm(s); return this.NAME2TICKER[n] || (this.NAME2TICKER[n.replace(/ energy$| resources$/,'')]) || null; }
+  _pct(v){ if(v==null) return null; if(typeof v==='number') return v; if(typeof v==='object'){ const c=[v.pct,v.change,v.changePct,v.since,v.perf,v.pctSince,v.change_pct].find(x=>typeof x==='number'); return c==null?null:c; } const f=parseFloat(v); return isNaN(f)?null:f; }
+  _abbrev(s){ s=(s||'').replace(/\(spouse\)/i,'').trim(); return s.length>20?s.slice(0,19)+'…':s; }
+  _roleType(r){ r=r||''; if(/parliamentary secretary/i.test(r)) return 'Parliamentary Secretaries'; if(/member of parliament/i.test(r)) return 'Members of Parliament'; if(/minister/i.test(r)) return 'Ministers and Ministers of State'; if(/(chief of staff|director|advisor|adviser|assistant|secretary|press|policy|operations|issues management|videographer|manager|comms)/i.test(r)) return 'Ministerial Staff'; if(/(clerk|ambassador|commissioner|president|chair|master of the mint|ombuds|comptroller|governor|ceo|vice-chair|member \()/i.test(r)) return 'Governor in Council Appointees'; return 'Public Office Holders'; }
+  _roleShort(rt){ return ({'Members of Parliament':'MP','Ministers and Ministers of State':'Cabinet','Parliamentary Secretaries':'Parl. Sec.','Ministerial Staff':'Staff','Governor in Council Appointees':'GiC','Public Office Holders':'POH'})[rt] || 'POH'; }
+  _partyLetter(p){ return ({L:'L',C:'C',NDP:'N',BQ:'BQ',G:'G'})[p] || '—'; }
+
+  _ensurePerson(map, name){
+    const key=this._slug(name);
+    if(!map[key]){
+      const party=this.PARTY_OVR[name] || 'NA';
+      const rt='Public Office Holders';
+      map[key]={ name, initials:this._inits(name), party, roleType:rt, roleLine:this._roleShort(rt)+' · '+(party==='NA'?'—':this._partyLetter(party)), title:name, bio:this.BAKED_BIOS[name]||'Public office holder listed in the CIEC registry.', isPM:name==='Mark Carney' };
+    }
+    return key;
+  }
+
+  applyLive({ prices, holdings, tape, signals, alpha }){
+    const D = { ...this.DOMAINS, ...this.EXTRA_DOMAINS };
+    const PRICES = {};
+    if (prices && typeof prices==='object'){ Object.keys(prices).forEach(k=>{ const v=this._pct(prices[k]); if(v!=null) PRICES[k.toUpperCase()]=v; }); }
+    const dom = tk => tk ? (D[tk]||D[tk.toUpperCase()]||'') : '';
+
+    const PEOPLE={}, HOLD={}, MAT={}, OTHER={}, TAGS={}, DDATE={}, SIGCOUNT={};
+
+    // ---- HOLDINGS ----
+    const hArr = Array.isArray(holdings)?holdings:[];
+    hArr.forEach(e=>{
+      const name=e.person; if(!name) return;
+      const key=this._slug(name);
+      const party=this.PARTY_OVR[name] || 'NA';
+      const rt=this._roleType(e.role);
+      const isPM=name==='Mark Carney';
+      PEOPLE[key]={ name, initials:this._inits(name), party, roleType:rt,
+        roleLine:(isPM?'PM':this._roleShort(rt))+' · '+(party==='NA'?'—':this._partyLetter(party)),
+        title:(e.role||this._roleShort(rt))+(party==='NA'?'':' · '+({L:'Liberal',C:'Conservative',NDP:'NDP',BQ:'Bloc Québécois',G:'Green'})[party]),
+        bio:this.BAKED_BIOS[name] || (e.role? e.role+'.' : 'Public office holder listed in the CIEC registry.'), isPM };
+      DDATE[key]=e.lastFiling||'';
+      HOLD[key]=(e.securities||[]).map(s=>{ const tk=this._tickerFor(s.s, s.ticker); return [s.s.replace(/\s*\(spouse\)/i,''), tk, tk?(PRICES[tk.toUpperCase()] ?? null):null, this._isSp(s.s)]; });
+      const added=(e.added||[]).map(a=>[a.s.replace(/\s*\(spouse\)/i,''), this._tickerFor(a.s,a.ticker)||'']);
+      const removed=(e.removed||[]).map(a=>[a.s.replace(/\s*\(spouse\)/i,''), this._tickerFor(a.s,a.ticker)||'']);
+      if(added.length||removed.length) MAT[key]={ date:e.lastFiling||'', added, removed };
+      OTHER[key]=(e.otherAssets||[]).slice(0,8);
+      const tags=[]; const oa=(e.otherAssets||[]).join(' ').toLowerCase();
+      if(HOLD[key].length) tags.push('Disclosure Summary (Code)');
+      if(added.length||removed.length) tags.push('Material Change');
+      if(/blind trust/.test(oa)) tags.push('Blind trust');
+      if(!tags.length) tags.push('Summary Statement (Act)');
+      TAGS[key]=tags;
+    });
+
+    // ---- TAPE ----
+    const evMap={ added:'new', removed:'removed', held:'hold' };
+    const tArr=Array.isArray(tape)?tape:[];
+    const TAPE=tArr.map(r=>{ const key=this._ensurePerson(PEOPLE, r.person); const tk=this._tickerFor(r.s); return [ tk||this._abbrev(r.s), r.s.replace(/\s*\(spouse\)/i,''), key, this._isSp(r.s), evMap[r.ev]||'hold', r.date||'' ]; });
+
+    // ---- MOSAIC (breadth by filers × events) ----
+    const agg={};
+    tArr.forEach(r=>{ const nk=this._norm(r.s); if(!nk) return; if(!agg[nk]) agg[nk]={ s:r.s.replace(/\s*\(spouse\)/i,''), filers:new Set(), events:0, net:0 }; agg[nk].filers.add(r.person); agg[nk].events++; if(r.ev==='added') agg[nk].net++; else if(r.ev==='removed') agg[nk].net--; });
+    const MOSAIC=Object.values(agg).map(a=>{ const tk=this._tickerFor(a.s); return { ticker:tk||this._abbrev(a.s), name:a.s, filers:a.filers.size, events:a.events, net:a.net }; })
+      .sort((x,y)=> (y.filers-x.filers)|| (y.events-x.events)).slice(0,14)
+      .map(a=>[ a.ticker, a.name, a.filers, a.events, a.net>0?'add':(a.net<0?'remove':'static') ]);
+
+    // ---- FILINGS (registry-parity, derived from holdings) ----
+    const FIL=hArr.filter(e=>e.person && ((e.securities&&e.securities.length)||(e.added&&e.added.length)||(e.removed&&e.removed.length)||(e.otherAssets&&e.otherAssets.length)))
+      .sort((a,b)=> (b.lastFiling||'').localeCompare(a.lastFiling||''))
+      .slice(0,140).map((e,i)=>{
+        const key=this._slug(e.person); const oa=(e.otherAssets||[]).join(' ').toLowerCase();
+        const hasSec=!!(e.securities&&e.securities.length); const hasChg=!!((e.added&&e.added.length)||(e.removed&&e.removed.length));
+        let type='Summary Statements (Act)', title='Summary Statement (Act)';
+        if(hasChg){ type='Material Changes'; title='Material Change'; }
+        else if(hasSec){ type='Disclosure Summaries (Code)'; title='Disclosure Summary (Code)'; }
+        else if(/blind trust/.test(oa)){ type='Declarable Assets'; title='Declarable Assets'; }
+        const lines=[]; if(e.role) lines.push(['Role', e.role]); (e.otherAssets||[]).slice(0,3).forEach(o=>lines.push(['Interest', o.length>140?o.slice(0,139)+'…':o]));
+        return { id:'lf'+i, pid:key, date:e.lastFiling||'', type, regime: type.indexOf('Act')>=0?'Act':(type.indexOf('Code')>=0?'Code':'—'), status:'Active', securities:hasSec, isNew:(e.lastFiling||'')>='2026-07-01' && hasChg, title, lines,
+          added:(e.added||[]).map(a=>[a.s.replace(/\s*\(spouse\)/i,''), this._tickerFor(a.s,a.ticker)||'']), removed:(e.removed||[]).map(a=>[a.s.replace(/\s*\(spouse\)/i,''), this._tickerFor(a.s,a.ticker)||'']) };
+      });
+
+    // ---- HOLDINGS ORDER: PM first, then filers with securities/material, by date ----
+    const order=Object.keys(PEOPLE).filter(k=>(HOLD[k]&&HOLD[k].length)||MAT[k]);
+    order.sort((a,b)=>{ if(PEOPLE[a].isPM) return -1; if(PEOPLE[b].isPM) return 1; return (DDATE[b]||'').localeCompare(DDATE[a]||''); });
+    const orderCapped=order.slice(0,50);
+
+    // ---- SIGNALS (defensive) ----
+    let SIG=null;
+    if(Array.isArray(signals)){
+      const mapped=signals.map(x=>{
+        const cos=(x.companies||x.tickers||x.matched||x.matches||[]).map(c=> typeof c==='string'?{name:c,ticker:this._tickerFor(c)}:{name:c.name||c.company||c.s||'', ticker:c.ticker||this._tickerFor(c.name||c.s)});
+        const hold=(x.holders||x.disclosedHolders||x.holdings||[]).map(h=>{ const nm=typeof h==='string'?h:(h.person||h.name||''); return { person:nm, tickers:(h.tickers||h.held||[]), date:h.date||h.disclosed||'', sp:this._isSp(nm)||!!h.spouse }; });
+        return { source:x.source||x.agency||x.department||x.dept||x.org||'Government', date:x.date||x.published||x.pubDate||'', title:x.title||x.headline||x.name||'', sector:x.sector||x.category||x.theme||'', companies:cos, holders:hold, note:x.note||'' };
+      }).filter(s=>s.title);
+      if(mapped.length){ SIG=mapped.map(s=>({ ...s, holders:s.holders.map(h=>({ ...h, key:this._ensurePerson(PEOPLE, h.person) })) })); }
+    }
+
+    // ---- ALPHA (defensive) ----
+    let GFI=null,SEDI=null,LOBBY=null,CONTR=null;
+    if(alpha && typeof alpha==='object'){
+      const gfiSrc=alpha.gfi||alpha.favourIndex||alpha.favour||alpha.index||alpha.governmentFavourIndex;
+      if(Array.isArray(gfiSrc)&&gfiSrc.length) GFI=gfiSrc.map(g=>[ g.ticker||g.symbol||g.t||'', g.score||g.value||g.rank||0, g.note||g.detail||'' ]);
+      const sediSrc=alpha.sedi||alpha.insider||alpha.insiderTransactions;
+      if(Array.isArray(sediSrc)&&sediSrc.length) SEDI=sediSrc.map(s=>[ s.date||'', s.ticker||s.symbol||'', s.role||s.insiderRole||'', s.action||s.type||'', s.amount||s.value||'' ]);
+      const lobSrc=alpha.lobby||alpha.lobbying||alpha.lobbyists;
+      if(Array.isArray(lobSrc)&&lobSrc.length) LOBBY=lobSrc.map(l=>[ l.name||l.company||'', l.domain||dom(this._tickerFor(l.name||l.company))||'', l.count||l.comms||l.communications||0, l.note||l.subjects||'' ]);
+      const conSrc=alpha.contracts||alpha.canadabuys||alpha.awards;
+      if(Array.isArray(conSrc)&&conSrc.length) CONTR=conSrc.map(c=>[ c.date||'', c.co||c.company||c.vendor||'', c.domain||dom(this._tickerFor(c.co||c.company))||'', c.dept||c.department||c.buyer||'', c.desc||c.description||'', c.amt||c.amount||c.value||'' ]);
+    }
+
+    // ---- commit ----
+    this.DOMAINS = D;
+    this.PEOPLE = PEOPLE;
+    this.HOLDINGS = HOLD;
+    this.MATERIAL = MAT;
+    this.OTHER = OTHER;
+    this.TAGS = TAGS;
+    this.DDATE = DDATE;
+    this.TAPE = TAPE;
+    this.MOSAIC = MOSAIC.length?MOSAIC:this.MOSAIC;
+    this.FILINGS = FIL.length?FIL:this.FILINGS;
+    this.holdingsOrder = orderCapped;
+    this.liveDate = (tArr[0] && tArr[0].date) || '';
+    if(SIG){ this.SIGNALS=SIG; SIG.forEach(s=>s.holders.forEach(h=>{ SIGCOUNT[h.key]=(SIGCOUNT[h.key]||0)+1; })); this.SIGCOUNT=SIGCOUNT; }
+    else { this.SIGNALS=[]; this.SIGCOUNT={}; }
+    if(GFI) this.GFI=GFI; if(SEDI) this.SEDI=SEDI; if(LOBBY) this.LOBBY=LOBBY; if(CONTR) this.CONTRACTS=CONTR;
+    this.forceUpdate();
+  }
+
+  PARTY = { L:'#D71920', C:'#1A4782', NDP:'#F58220', BQ:'#33B2CC', G:'#3D9B35', NA:'#8C99A4' };
+
+  DOMAINS = { 'AA':'alcoa.com','ATD.TO':'couche-tard.com','CAE.TO':'cae.com','CNR.TO':'cn.ca','CP.TO':'cpkcr.com','GE':'geaerospace.com','LNR.TO':'linamar.com','HOG':'harley-davidson.com','MDT':'medtronic.com','RIO':'riotinto.com','SBUX':'starbucks.com','BN.TO':'brookfield.com','KMB':'kimberly-clark.com','CVE.TO':'cenovus.com','QSR.TO':'rbi.com','AMZN':'amazon.com','TFII.TO':'tfiintl.com','SWK':'stanleyblackanddecker.com','TEVA':'tevapharm.com','MU':'micron.com','BAC':'bankofamerica.com','KKR':'kkr.com','UPS':'ups.com','WFC':'wellsfargo.com','BAM':'brookfield.com','BMO.TO':'bmo.com','BBD.B.TO':'bombardier.com','CM.TO':'cibc.com','CNQ.TO':'cnrl.com','DOL.TO':'dollarama.com','EFN.TO':'elementfleet.com','ENB.TO':'enbridge.com','RY.TO':'rbcroyalbank.com','SU.TO':'suncor.com','TIH.TO':'toromont.com','WCN.TO':'wasteconnections.com','SAP.TO':'saputo.com','FTT.TO':'finning.com','OVV.TO':'ovintiv.com','TD.TO':'td.com','GLW':'corning.com','ATRL.TO':'atkinsrealis.com','AIG':'aig.com','INTC':'intel.com','MOS':'mosaicco.com','LRCX':'lamresearch.com' };
+
+  PEOPLE = {
+    carney:{name:'Mark Carney',initials:'MC',party:'L',roleLine:'PM · L',roleType:'Ministers and Ministers of State',title:'Prime Minister · Liberal · Cabinet',bio:'Prime Minister since March 2025. Former Governor of the Bank of Canada and Bank of England; former chair of Brookfield Asset Management and board member at Stripe. Assets held in a blind trust with conflict-of-interest screens administered by his chief of staff.',isPM:true},
+    koutrakis:{name:'Annie Koutrakis',initials:'AK',party:'L',roleLine:'MP · L',roleType:'Members of Parliament',title:'MP for Vimy, QC · Liberal',bio:"Liberal MP for Vimy, first elected 2019. Disclosed holdings are primarily her spouse's brokerage portfolio, restated by material change in July 2026."},
+    elkhoury:{name:'Fayçal El-Khoury',initials:'FE',party:'L',roleLine:'MP · L',roleType:'Members of Parliament',title:'MP for Laval—Les Îles, QC · Liberal',bio:"First elected 2015. Engineer and businessman. Filings centre on two family trusts and his spouse's portfolio and dental-clinic corporation."},
+    hodgson:{name:'Tim Hodgson',initials:'TH',party:'L',roleLine:'Cabinet · L',roleType:'Ministers and Ministers of State',title:'Minister of Energy & Natural Resources · Liberal',bio:'Former CEO of Goldman Sachs Canada and chair of Hydro One.'},
+    leblanc:{name:'Dominic LeBlanc',initials:'DL',party:'L',roleLine:'Cabinet · L',roleType:'Ministers and Ministers of State',title:'Minister responsible for Canada–U.S. Trade · Liberal',bio:'Minister responsible for Canada–U.S. Trade.'},
+    champagne:{name:'François-Philippe Champagne',initials:'FC',party:'L',roleLine:'Cabinet · L',roleType:'Ministers and Ministers of State',title:'Minister of Finance & National Revenue · Liberal',bio:'Minister of Finance and National Revenue.'},
+    anand:{name:'Gary Anandasangaree',initials:'GA',party:'L',roleLine:'Cabinet · L',roleType:'Ministers and Ministers of State',title:'Minister of Public Safety · Liberal',bio:'Minister of Public Safety.'},
+    fonseca:{name:'Peter Fonseca',initials:'PF',party:'L',roleLine:'MP · L',roleType:'Members of Parliament',title:'MP for Mississauga East—Cooksville · Liberal',bio:'MP for Mississauga East—Cooksville.'},
+    sabia:{name:'Michael Sabia',initials:'MS',party:'NA',roleLine:'PCO · —',roleType:'Public Office Holders',title:'Clerk of the Privy Council · Non-affiliated',bio:'Clerk of the Privy Council.'},
+    mearns:{name:'Virginia Mearns',initials:'VM',party:'NA',roleLine:'GiC · —',roleType:'Governor in Council Appointees',title:'Arctic Ambassador · Non-affiliated',bio:'Arctic Ambassador.'},
+    costen:{name:'Jeff Costen',initials:'JC',party:'L',roleLine:'Staff · L',roleType:'Ministerial Staff',title:'Director of Issues Management · Ministerial staff',bio:'Director of Issues Management. Ministerial staff; the avatar ring shows the governing-party colour.'},
+  };
+
+  HOLDINGS = {
+    carney:[['Brookfield Asset Management — stock options','BAM',18.9,false]],
+    koutrakis:[['Alcoa','AA',1.2,true],['Alimentation Couche-Tard','ATD.TO',-0.4,true],['CAE','CAE.TO',2.1,true],['CN Rail','CNR.TO',0.6,true],['CPKC','CP.TO',-0.8,true],['GE Aerospace','GE',1.9,true],['Linamar','LNR.TO',0.3,true],['Harley-Davidson','HOG',-1.5,true],['Medtronic','MDT',0.5,true],['Rio Tinto','RIO',2.4,true],['Starbucks','SBUX',-0.6,true],['Brookfield Corp','BN.TO',1.1,true],['Kimberly-Clark','KMB',0.2,true],['Cenovus','CVE.TO',3.2,true],['Restaurant Brands','QSR.TO',-0.3,true],['Amazon','AMZN',1.4,true],['TFI','TFII.TO',0.9,true],['Stanley Black & Decker','SWK',-1.1,true],['Teva','TEVA',0.7,true],['Micron','MU',4.6,true],['Bank of America','BAC',0.8,true],['KKR','KKR',1.6,true],['UPS','UPS',-0.5,true],['Wells Fargo','WFC',0.4,true]],
+    elkhoury:[['Alimentation Couche-Tard','ATD.TO',-0.4,true],['BMO','BMO.TO',0.7,true],['Bombardier B','BBD.B.TO',2.8,true],['CIBC','CM.TO',0.5,true],['Canadian Natural','CNQ.TO',2.9,true],['Dollarama','DOL.TO',0.2,true],['Element Fleet','EFN.TO',1.0,true],['Enbridge','ENB.TO',1.3,true],['RBC','RY.TO',0.6,true],['Suncor','SU.TO',2.5,true],['Toromont','TIH.TO',0.4,true],['Waste Connections','WCN.TO',-0.2,true],['Pembina Pipeline 3.71% debenture 2026',null,null,true],['BMO 3.19% note 2028',null,null,true],['Sun Life 4.78% subordinated debt',null,null,true]],
+  };
+
+  MATERIAL = {
+    koutrakis:{ date:'2026-07-08', added:[['Brookfield Corp','BN.TO'],['Kimberly-Clark','KMB'],['Cenovus','CVE.TO'],['Restaurant Brands','QSR.TO'],['Amazon','AMZN'],['TFI','TFII.TO'],['Stanley Black & Decker','SWK'],['Teva','TEVA'],['Micron','MU'],['Bank of America','BAC'],['KKR','KKR'],['UPS','UPS'],['Wells Fargo','WFC']], removed:[['Lam Research','LRCX'],['Saputo','SAP.TO'],['Finning','FTT.TO'],['Ovintiv','OVV.TO'],['TD Bank','TD.TO'],['Corning','GLW'],['AtkinsRéalis','ATRL.TO'],['AIG','AIG'],['Intel','INTC'],['Mosaic','MOS']] },
+    costen:{ date:'2026-07-04', added:[], removed:[['Publicly traded securities — divested by sale','']] },
+  };
+
+  OTHER = {
+    carney:['Blind trust established under the Act','Conflict-of-interest screens re Brookfield Corp / Brookfield Asset Management','Screen re Stripe, Inc.'],
+    koutrakis:['Blind trust','Board member — World Hellenic Inter-Parliamentary Association','Spouse — line of credit (CIBC)'],
+    elkhoury:['Fiducie GF (holds 9328-8504 Québec Inc.)','Fiducie JJS','Line of credit — National Bank','Spouse — controlling interest in Clinique dentaire Dre Georgette Elias Inc.'],
+    hodgson:['Gift — FIFA World Cup tickets + gift package (source: FIFA)'],
+    leblanc:['Recusal — appointment of Dr. Rodney Ouellette as Senator for New Brunswick'],
+    fonseca:['Gift — World Cup ticket, Croatia v Portugal (source: Canadian-Croatian Chamber of Commerce)'],
+    sabia:['No longer a director of the Mastercard Foundation'],
+    anand:['Gift — jewelry box (source: U.S. Secretary of Homeland Security)'],
+    champagne:['Gift — World Cup ticket, Panama v Croatia (source: FIFA)'],
+    mearns:['Penalty — para. 22(2)(g), $400 (failure to provide documents within 60 days)'],
+    costen:['Initial compliance complete — publicly traded securities divested by sale'],
+  };
+
+  SIGCOUNT = { carney:1, koutrakis:4, elkhoury:1 };
+
+  FILINGS = [
+    {id:'f1',pid:'carney',date:'2025-07-11',type:'Compliance Measures',regime:'Act',status:'Active',securities:true,title:'Compliance Measures (Act)',lines:[['Screen administered by','Chief of Staff'],['Entities','Brookfield Corporation · Brookfield Asset Management · Stripe, Inc.'],['Arrangement','Assets divested to a blind trust established under the Act.']]},
+    {id:'f2',pid:'carney',date:'2025-07-11',type:'Declarable Assets',regime:'Act',status:'Active',title:'Declarable Assets',lines:[['Arrangement','Assets placed in a blind trust pursuant to s. 27 of the Conflict of Interest Act.'],['Contents','Not publicly itemized.']]},
+    {id:'f3',pid:'koutrakis',date:'2026-07-08',type:'Disclosure Summaries (Code)',regime:'Code',status:'Active',securities:true,title:'Disclosure Summary (Code)',lines:[['Blind trust','Yes'],['Board member','World Hellenic Inter-Parliamentary Association'],['Spouse — line of credit','CIBC'],['Spouse — securities','Shares in 24 companies (see profile)']]},
+    {id:'f4',pid:'koutrakis',date:'2026-07-08',type:'Material Changes',regime:'Code',status:'Active',securities:true,isNew:true,title:'Material Change',lines:[],added:[['Brookfield Corp','BN.TO'],['Kimberly-Clark','KMB'],['Cenovus','CVE.TO'],['Restaurant Brands','QSR.TO'],['Amazon','AMZN'],['TFI','TFII.TO'],['Stanley Black & Decker','SWK'],['Teva','TEVA'],['Micron','MU'],['Bank of America','BAC'],['KKR','KKR'],['UPS','UPS'],['Wells Fargo','WFC']],removed:[['Lam Research','LRCX'],['Saputo','SAP.TO'],['Finning','FTT.TO'],['Ovintiv','OVV.TO'],['TD Bank','TD.TO'],['Corning','GLW'],['AtkinsRéalis','ATRL.TO'],['AIG','AIG'],['Intel','INTC'],['Mosaic','MOS']]},
+    {id:'f5',pid:'elkhoury',date:'2026-07-06',type:'Disclosure Summaries (Code)',regime:'Code',status:'Active',securities:true,title:'Disclosure Summary (Code)',lines:[['Family trusts','Fiducie GF (9328-8504 Québec Inc.) · Fiducie JJS'],['Line of credit','National Bank'],['Spouse — corporation','Clinique dentaire Dre Georgette Elias Inc. (controlling interest)'],['Spouse — securities','Debentures + 12 equities (see profile)']]},
+    {id:'f6',pid:'costen',date:'2026-07-04',type:'Summary Statements (Act)',regime:'Act',status:'Active',securities:true,title:'Summary Statement (Act)',lines:[['Status','Initial compliance complete. Divestment of publicly traded securities by sale.']],removed:[['Publicly traded securities — divested by sale','']]},
+    {id:'f7',pid:'hodgson',date:'2026-07-09',type:'Gifts (Act)',regime:'Act',status:'Active',title:'Gifts (Act)',lines:[['Gift','Two FIFA World Cup tickets (Switzerland v Algeria, Vancouver, 2 Jul 2026) + gift package'],['Source','FIFA']]},
+    {id:'f8',pid:'leblanc',date:'2026-07-09',type:'Recusals',regime:'—',status:'Active',title:'Recusal',lines:[['Recusal','Appointment of Dr. Rodney Ouellette as Senator for New Brunswick'],['Reason',"Friend's private interest"]]},
+    {id:'f9',pid:'fonseca',date:'2026-07-09',type:'Gifts (Code)',regime:'Code',status:'Active',title:'Gifts (Code)',lines:[['Gift','World Cup ticket (Croatia v Portugal, Toronto)'],['Source','Canadian-Croatian Chamber of Commerce']]},
+    {id:'f10',pid:'sabia',date:'2026-07-08',type:'Outside Activities',regime:'—',status:'No Longer Applicable',noLonger:true,title:'Outside Activities',lines:[['Change','No longer a director of the Mastercard Foundation']]},
+    {id:'f11',pid:'anand',date:'2026-07-07',type:'Gifts (Act)',regime:'Act',status:'Active',title:'Gifts (Act)',lines:[['Gift','Jewelry box'],['Source','U.S. Secretary of Homeland Security']]},
+    {id:'f12',pid:'champagne',date:'2026-07-07',type:'Gifts (Act)',regime:'Act',status:'Active',title:'Gifts (Act)',lines:[['Gift','World Cup ticket (Panama v Croatia, Toronto)'],['Source','FIFA']]},
+    {id:'f13',pid:'mearns',date:'2026-07-02',type:'Penalties',regime:'Act',status:'Active',title:'Penalty',lines:[['Provision','para. 22(2)(g) — failure to provide documents within 60 days'],['Amount','$400']]},
+  ];
+
+  SIGNALS = [
+    {source:'PMO / NRCan',date:'2026-06-25',title:'Major Projects Office designates Pathways carbon-capture network as a nation-building project',sector:'Energy',companies:[['Cenovus','CVE.TO'],['Suncor','SU.TO'],['Canadian Natural','CNQ.TO']],holders:[['elkhoury',['CNQ.TO','SU.TO'],'2026-07-06',true],['koutrakis',['CVE.TO'],'2026-07-08',true]]},
+    {source:'ISED',date:'2026-05-30',title:'Canada Strong Fund anchor investment in critical-minerals processing partnership',sector:'Critical minerals',companies:[['Rio Tinto','RIO']],holders:[['koutrakis',['RIO'],'2026-07-08',true]]},
+    {source:'National Defence',date:'2026-04-14',title:'Future Aircrew Training program milestone — federal training contract',sector:'Defence',companies:[['CAE','CAE.TO']],holders:[['koutrakis',['CAE.TO'],'2026-07-08',true]]},
+    {source:'Canada Infrastructure Bank',date:'2026-03-02',title:'CIB co-investment with a Brookfield-managed fund in transmission infrastructure',sector:'Infrastructure',companies:[['Brookfield Corp','BN.TO']],holders:[['koutrakis',['BN.TO'],'2026-07-08',true]],note:"Relates to the Prime Minister's Brookfield conflict-of-interest screen."},
+  ];
+
+  GFI = [['CAE.TO',86,'1 announcement · $58M contract · 24 comms · insider buying · held by 1 filer'],['CVE.TO',81,''],['BN.TO',78,''],['SU.TO',74,''],['ENB.TO',63,''],['RIO',55,'']];
+  SEDI = [['2026-07-10','CVE.TO','SVP Downstream','Buy','$210K'],['2026-07-09','ENB.TO','Director','Buy','$95K'],['2026-07-07','SU.TO','CFO','Sell','$480K'],['2026-07-03','BN.TO','Officer (option exercise)','Sell','$1.2M'],['2026-06-28','CAE.TO','Director','Buy','$62K']];
+  LOBBY = [['Enbridge','enbridge.com',42,'NRCan · PMO'],['Brookfield','brookfield.com',37,'Finance · CIB'],['Cenovus','cenovus.com',33,''],['Suncor','suncor.com',29,''],['CAE','cae.com',24,'DND · ISED'],['Rio Tinto','riotinto.com',18,'']];
+  CONTRACTS = [['2026-06-18','CAE','cae.com','National Defence','Aircrew training services','$58.0M'],['2026-05-22','Bombardier','bombardier.com','National Defence','Aircraft sustainment','$12.4M'],['2026-04-30','Toromont','toromont.com','Parks Canada','Heavy equipment','$2.1M']];
+
+  MOSAIC = [['BN.TO','Brookfield Corp',2,3,'add'],['CVE.TO','Cenovus',2,2,'add'],['ATD.TO','Couche-Tard',2,2,'static'],['CAE.TO','CAE',1,2,'static'],['SU.TO','Suncor',1,2,'static'],['RIO','Rio Tinto',1,2,'static'],['AMZN','Amazon',1,1,'add'],['ENB.TO','Enbridge',1,1,'static'],['CNQ.TO','Canadian Natural',1,1,'static'],['MU','Micron',1,1,'add'],['TD.TO','TD Bank',1,1,'remove'],['BAM','Brookfield AM',1,1,'add']];
+
+  TAPE = [
+    ['BN.TO','Brookfield Corp','koutrakis',true,'new','2026-07-08'],['CVE.TO','Cenovus','koutrakis',true,'new','2026-07-08'],['AMZN','Amazon','koutrakis',true,'new','2026-07-08'],['MU','Micron','koutrakis',true,'new','2026-07-08'],['KKR','KKR','koutrakis',true,'new','2026-07-08'],['WFC','Wells Fargo','koutrakis',true,'new','2026-07-08'],['BAM','Brookfield Asset Mgmt','carney',false,'hold','2025-07-11'],['CNQ.TO','Canadian Natural','elkhoury',true,'hold','2026-07-06'],['ENB.TO','Enbridge','elkhoury',true,'hold','2026-07-06'],['SU.TO','Suncor','elkhoury',true,'hold','2026-07-06'],['ATD.TO','Couche-Tard','elkhoury',true,'hold','2026-07-06'],['BMO.TO','BMO','elkhoury',true,'hold','2026-07-06'],['CAE.TO','CAE','koutrakis',true,'hold','2026-07-08'],['RIO','Rio Tinto','koutrakis',true,'hold','2026-07-08'],['TD.TO','TD Bank','koutrakis',true,'removed','2026-07-08'],['INTC','Intel','koutrakis',true,'removed','2026-07-08'],['LRCX','Lam Research','koutrakis',true,'removed','2026-07-08'],['','Publicly traded securities','costen',false,'removed','2026-07-04'],
+  ];
+
+  DECL = ['All','Compliance Measures','Declarable Assets','Disclosure Summaries (Code)','Forfeited Gifts (Act)','Gifts (Act)','Gifts (Code)','Liabilities','Material Changes','Other Appropriate Documents','Outside Activities','Private Interest','Recusals','Sponsored Travel','Summary Statements (Act)','Travel'];
+  OTHERDOCS = ['All','Compliance Orders','Examinations (Act)','Exemptions (Section 38)','Inquiries (Code)','Penalties','Waivers (Section 39)'];
+  ROLES = ['All','Governor in Council Appointees','Members of Parliament','Ministerial Staff','Ministers and Ministers of State','Parliamentary Secretaries','Public Office Holders'];
+  STATUSES = ['All','Active','No Longer Applicable'];
+  SORTS = ['Disclosure date','Last name','First name'];
+
+  // handlers
+  setView = (v) => this.setState({ view:v, showNotif:false });
+  toggleFilters = () => this.setState(s => ({ showFilters:!s.showFilters, showNotif:false }));
+  closeFilters = () => this.setState({ showFilters:false });
+  toggleNotif = () => this.setState(s => ({ showNotif:!s.showNotif }));
+  closeNotif = () => this.setState({ showNotif:false });
+  markAll = () => this.setState({ notifRead:true });
+  openProfile = (id) => this.setState({ profileId:id, showFilters:false, showNotif:false });
+  closeProfile = () => this.setState({ profileId:null });
+  onSearch = (e) => this.setState({ q:e.target.value });
+  onDateFrom = (e) => this.setState({ dateFrom:e.target.value });
+  onDateTo = (e) => this.setState({ dateTo:e.target.value });
+  clearFilters = () => this.setState({ q:'', pmOnly:false, secOnly:false, declType:'All', otherDoc:'All', role:'All', status:'All', dateFrom:'', dateTo:'', sortBy:'Disclosure date', order:'desc' });
+  stop = (e) => e.stopPropagation();
+
+  ring(id){ const p=this.PEOPLE[id]; return p.party==='NA'?this.PARTY.NA:(this.PARTY[p.party]||this.PARTY.NA); }
+  dom(t){ return t?(this.DOMAINS[t]||''):''; }
+  mono(name,t){ if(t) return t.replace(/\..*$/,'').replace(/[^A-Za-z]/g,'').slice(0,2).toUpperCase()||'?'; return (name||'?').replace(/[^A-Za-z]/g,'').slice(0,2).toUpperCase()||'?'; }
+  perf(v){ if(v==null) return {t:'—',c:'#8C99A4',d:'#59656F'}; const pos=v>=0; return { t:(pos?'+':'')+v.toFixed(1)+'%', c:pos?'#B4D163':'#8C99A4', d:pos?'#3a5a12':'#59656F' }; }
+  statusColor(s){ return s==='No Longer Applicable' ? '#8C99A4' : '#B4D163'; }
+  statusColorDark(s){ return s==='No Longer Applicable' ? '#59656F' : '#3a5a12'; }
+
+  renderVals(){
+    const st = this.state;
+    const q = st.q.trim().toLowerCase();
+    const P = this.PEOPLE;
+    const zOn = this.props.zebraStripes !== false;
+    const zebra = i => (zOn && i%2 ? 'rgba(253,255,252,.035)' : 'transparent');
+    const zebraLt = i => (zOn && i%2 ? 'rgba(0,20,0,.035)' : 'transparent');
+    const person = id => ({ id, name:P[id].name, initials:P[id].initials, ring:this.ring(id), roleLine:P[id].roleLine, open:()=>this.openProfile(id) });
+    const sec = ([name,ticker,perf,sp], date) => { const pf=this.perf(perf); return { name, ticker:ticker||'', domain:this.dom(ticker), mono:this.mono(name,ticker), perfText:pf.t, perfColor:pf.c, perfDark:pf.d, sp:!!sp, date:date||'' }; };
+    const chg = ([name,ticker]) => ({ name, ticker:ticker||'', domain:this.dom(ticker), mono:this.mono(name,ticker) });
+
+    // ---- MOSAIC ----
+    const tints = { add:'linear-gradient(155deg,rgba(180,209,99,.22),rgba(180,209,99,.06))', remove:'linear-gradient(155deg,rgba(89,101,111,.30),rgba(89,101,111,.10))', static:'linear-gradient(155deg,rgba(0,20,0,.5),rgba(0,20,0,.26))' };
+    const mosaic = this.MOSAIC.map(([ticker,name,filers,events,tint]) => { const w=filers*events; return { ticker, name, domain:this.dom(ticker), mono:this.mono(name,ticker), grow:w, basis:80+w*22, h:w>=4?152:(w>=2?120:96), bg:tints[tint], meta:`${filers} filer${filers>1?'s':''} · ${events} event${events>1?'s':''}` }; });
+
+    // ---- TAPE ----
+    const evMap = { new:{label:'Newly disclosed',dot:'#B4D163'}, removed:{label:'No longer disclosed',dot:'#8C99A4'}, hold:{label:'Disclosed holding',dot:'rgba(253,255,252,.5)'} };
+    let tape = this.TAPE.map(([tk,cname,pid,sp,ev,date]) => ({ company:{ ticker:tk, name:cname, domain:this.dom(tk), mono:this.mono(cname,tk) }, sp, personName:P[pid].name, personInitials:P[pid].initials, personRing:this.ring(pid), roleLine:P[pid].roleLine, open:()=>this.openProfile(pid), event:{ ...evMap[ev], date }, _pid:pid, _blob:(tk+' '+cname+' '+P[pid].name).toLowerCase() }));
+    if(st.pmOnly) tape = tape.filter(r=>P[r._pid]&&P[r._pid].isPM);
+    if(q) tape = tape.filter(r=>r._blob.includes(q));
+    tape = tape.slice(0,140).map((r,i)=>({ ...r, zebra:zebra(i) }));
+
+    // ---- HOLDINGS ----
+    const bakedDD = id => id==='carney'?'2025-07-11':(id==='koutrakis'?'2026-07-08':id==='elkhoury'?'2026-07-06':(id==='costen'?'2026-07-04':''));
+    const ddFor = id => (this.DDATE && this.DDATE[id]) || bakedDD(id);
+    const bakedTags = { carney:['Compliance Measures (Act)','Declarable Assets'], koutrakis:['Disclosure Summary (Code)','Material Change'], elkhoury:['Disclosure Summary (Code)'], costen:['Summary Statement (Act)'] };
+    const cardIds = (this.holdingsOrder && this.holdingsOrder.length) ? this.holdingsOrder : ['carney','koutrakis','elkhoury','costen'];
+    let holdings = cardIds.filter(id=>P[id]).map(id => {
+      const hold=(this.HOLDINGS[id]||[]).map(h=>sec(h, ddFor(id)));
+      const mat=this.MATERIAL[id];
+      const tags = (this.TAGS && this.TAGS[id]) ? this.TAGS[id] : (bakedTags[id]||[]);
+      const sig=this.SIGCOUNT[id]||0;
+      return { id, person:person(id), isPM:P[id].isPM, ring:P[id].isPM?0.5:0, ringW:P[id].isPM?2:0, signals:sig, hasSig:sig>0,
+        pmNote: P[id].isPM ? 'Holdings in a blind trust — contents not publicly itemized. Screens and disclosed stock options are shown in the profile.' : '',
+        hasSec: hold.length>0, securities: hold.map((s,i)=>({ ...s, zebra:zebra(i) })),
+        hasMaterial: !!mat, material: mat?{ added:mat.added.map(a=>({ ...chg(a), date:mat.date })), removed:mat.removed.map(r=>({ ...chg(r), date:mat.date })), noneAdded:mat.added.length===0 }:{ added:[], removed:[], noneAdded:true },
+        tags };
+    });
+    if(st.pmOnly) holdings = holdings.filter(c=>c.isPM);
+    if(st.secOnly) holdings = holdings.filter(c=>c.hasSec);
+    if(q) holdings = holdings.filter(c=>c.person.name.toLowerCase().includes(q));
+
+    // ---- SIGNALS ----
+    const signals = this.SIGNALS.map(s => ({ source:s.source, date:s.date, title:s.title, sector:s.sector, note:s.note||'',
+      companies:s.companies.map(([n,t])=>({ ticker:t, name:n, domain:this.dom(t), mono:this.mono(n,t) })),
+      holders:s.holders.map(([pid,tks,date,sp])=>({ name:P[pid].name, initials:P[pid].initials, ring:this.ring(pid), open:()=>this.openProfile(pid), tickers:tks.join(', '), date, sp })) }));
+
+    // ---- ALPHA ----
+    const gfiMax=Math.max(...this.GFI.map(g=>g[1]));
+    const gfi=this.GFI.map(([ticker,score,note])=>({ ticker, score, note, pct:Math.round(score/gfiMax*100) }));
+    const sedi=this.SEDI.map(([date,ticker,role,action,amount],i)=>({ date, ticker, role, action, amount, color:action==='Buy'?'#B4D163':'#8C99A4', zebra:zebra(i) }));
+    const lobMax=Math.max(...this.LOBBY.map(l=>l[2]));
+    const lobby=this.LOBBY.map(([name,domain,count,note])=>({ name, domain, mono:this.mono(name,''), count, note, pct:Math.round(count/lobMax*100) }));
+    const contracts=this.CONTRACTS.map(([date,co,domain,dept,desc,amt],i)=>({ date, co, domain, mono:this.mono(co,''), dept, desc, amt, zebra:zebra(i) }));
+
+    // ---- FILINGS (filtered) ----
+    let filings = this.FILINGS.slice();
+    if(st.pmOnly) filings=filings.filter(f=>P[f.pid]&&P[f.pid].isPM);
+    if(st.secOnly) filings=filings.filter(f=>f.securities);
+    if(st.role!=='All') filings=filings.filter(f=>P[f.pid]&&P[f.pid].roleType===st.role);
+    if(st.status!=='All') filings=filings.filter(f=>f.status===st.status);
+    if(st.declType!=='All') filings=filings.filter(f=>f.type===st.declType);
+    if(st.otherDoc!=='All') filings=filings.filter(f=>f.type===st.otherDoc);
+    if(st.dateFrom) filings=filings.filter(f=>f.date>=st.dateFrom);
+    if(st.dateTo) filings=filings.filter(f=>f.date<=st.dateTo);
+    if(q) filings=filings.filter(f=>(P[f.pid].name+' '+f.title+' '+JSON.stringify(f.lines||[])+JSON.stringify(f.added||[])+JSON.stringify(f.removed||[])).toLowerCase().includes(q));
+    const dir=st.order==='asc'?1:-1;
+    const last=id=>P[id].name.trim().split(' ').slice(-1)[0];
+    const first=id=>P[id].name.trim().split(' ')[0];
+    filings.sort((a,b)=>{ if(st.sortBy==='Disclosure date'){ return dir*(a.date<b.date?-1:a.date>b.date?1:0); } const va=st.sortBy==='Last name'?last(a.pid):first(a.pid), vb=st.sortBy==='Last name'?last(b.pid):first(b.pid); return dir*va.localeCompare(vb); });
+    const filingCards = filings.map(f => {
+      const chips=[];
+      if(P[f.pid]&&P[f.pid].isPM) chips.push({label:'PM',bg:'#B4D163',fg:'#001400'});
+      if(f.securities) chips.push({label:'Securities',bg:'rgba(180,209,99,.9)',fg:'#001400'});
+      if(f.isNew) chips.push({label:'New',bg:'#B4D163',fg:'#001400'});
+      if(f.noLonger) chips.push({label:'No longer applicable',bg:'rgba(89,101,111,.85)',fg:'#FDFFFC'});
+      const tags=[]; if(f.regime!=='—') tags.push(f.regime); tags.push(f.type); if(P[f.pid]) tags.push(P[f.pid].roleType);
+      const added=(f.added||[]).map(chg), removed=(f.removed||[]).map(chg);
+      return { id:f.id, title:f.title, date:f.date, status:f.status, statusColor:this.statusColor(f.status), person:person(f.pid),
+        chips, hasChips:chips.length>0, lines:(f.lines||[]).map(([label,value])=>({label,value})), hasLines:(f.lines||[]).length>0,
+        added, removed, hasAdded:added.length>0, hasRemoved:removed.length>0, hasChanges:(added.length+removed.length)>0, tags };
+    });
+
+    // ---- FILTERS ----
+    const mk=(field,arr)=>arr.map(v=>{ const a=st[field]===v; return { label:v, onClick:()=>this.setState({[field]:v}), bg:a?'#B4D163':'rgba(0,20,0,.06)', fg:'#001400' }; });
+    const orderOpts=[{label:'Newest first',v:'desc'},{label:'Oldest first',v:'asc'}].map(o=>{ const a=st.order===o.v; return { label:o.label, onClick:()=>this.setState({order:o.v}), bg:a?'#B4D163':'rgba(0,20,0,.06)', fg:'#001400' }; });
+    const groups=[ {title:'Declaration type',opts:mk('declType',this.DECL)}, {title:'Other documents',opts:mk('otherDoc',this.OTHERDOCS)}, {title:'Role',opts:mk('role',this.ROLES)}, {title:'Status',opts:mk('status',this.STATUSES)}, {title:'Sort by',opts:mk('sortBy',this.SORTS)}, {title:'Order',opts:orderOpts} ];
+    const legend=[['Liberal','#D71920'],['Conservative','#1A4782'],['NDP','#F58220'],['Bloc','#33B2CC'],['Green','#3D9B35'],['Non-affiliated','#8C99A4']].map(([label,color])=>({label,color}));
+    let activeCount=0; ['declType','otherDoc','role','status'].forEach(k=>{ if(st[k]!=='All') activeCount++; }); if(st.dateFrom) activeCount++; if(st.dateTo) activeCount++;
+
+    // ---- NOTIFICATIONS ----
+    const notifs=this.FILINGS.slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,8).map((f,i)=>({ name:P[f.pid].name, type:f.title, date:f.date, dot:f.securities?'#B4D163':'rgba(0,20,0,.2)', open:()=>this.openProfile(f.pid), zebra:zebraLt(i) }));
+    const notifCount=st.notifRead?0:notifs.length;
+
+    // ---- PROFILE ----
+    let prof=null;
+    if(st.profileId){ const id=st.profileId; const p=P[id]; const fs=this.FILINGS.filter(f=>f.pid===id); const hold=(this.HOLDINGS[id]||[]); const mat=this.MATERIAL[id]; const dd=(this.DDATE&&this.DDATE[id])||(id==='carney'?'2025-07-11':(id==='koutrakis'?'2026-07-08':id==='elkhoury'?'2026-07-06':''));
+      prof={ name:p.name, initials:p.initials, ring:this.ring(id), title:p.title, bio:p.bio,
+        stats:[['Filings',fs.length],['Securities',hold.length],['Added',mat?mat.added.length:0],['Removed',mat?mat.removed.length:0],['Signals',this.SIGCOUNT[id]||0]].map(([k,v])=>({k,v})),
+        hasSec:hold.length>0, securities:hold.map(h=>sec(h,dd)),
+        hasMaterial:!!mat, material: mat?{ added:mat.added.map(chg), removed:mat.removed.map(chg), noneAdded:mat.added.length===0 }:{added:[],removed:[],noneAdded:true},
+        hasOther:(this.OTHER[id]||[]).length>0, other:this.OTHER[id]||[],
+        filings:fs.map(f=>({ type:f.title, date:f.date, status:f.status, color:this.statusColorDark(f.status) })) };
+    }
+
+    const nk=k=>({ go:()=>this.setView(k), bg: st.view===k?'#001400':'transparent', fg: st.view===k?'#FDFFFC':'rgba(0,20,0,.6)' });
+
+    return {
+      // view flags
+      isTape:st.view==='tape', isHoldings:st.view==='holdings', isSignals:st.view==='signals', isAlpha:st.view==='alpha', isFilings:st.view==='filings',
+      nav:{ tape:nk('tape'), holdings:nk('holdings'), signals:nk('signals'), alpha:nk('alpha'), filings:nk('filings') },
+      // search + chrome
+      q:st.q, onSearch:this.onSearch, toggleFilters:this.toggleFilters, closeFilters:this.closeFilters,
+      activeCount, hasActive:activeCount>0,
+      toggleNotif:this.toggleNotif, closeNotif:this.closeNotif, markAll:this.markAll, notifs, notifCount, hasNotif:notifCount>0,
+      showFilters:st.showFilters, showNotif:st.showNotif,
+      pmChip:{ onClick:()=>this.setState(s=>({pmOnly:!s.pmOnly})), bg:st.pmOnly?'#B4D163':'rgba(0,20,0,.4)', fg:st.pmOnly?'#001400':'#FDFFFC' },
+      secChip:{ onClick:()=>this.setState(s=>({secOnly:!s.secOnly})), bg:st.secOnly?'#B4D163':'rgba(0,20,0,.4)', fg:st.secOnly?'#001400':'#FDFFFC' },
+      showClear: activeCount>0 || st.pmOnly || st.secOnly || !!q, clearFilters:this.clearFilters,
+      dateNote: st.dataSource==='live' ? ((this.liveDate||'live')+' · live CIEC pipeline') : (st.dataSource==='loading' ? 'syncing live pipeline…' : '2026-07-13 · sample data'),
+      // data
+      mosaic, tape, holdings, holdingsEmpty:holdings.length===0, signals, gfi, sedi, lobby, contracts,
+      filings:filingCards, filingsEmpty:filingCards.length===0,
+      groups, legend, dateFrom:st.dateFrom, dateTo:st.dateTo, onDateFrom:this.onDateFrom, onDateTo:this.onDateTo,
+      // profile
+      hasProfile:!!prof, prof:prof||{stats:[],securities:[],material:{added:[],removed:[]},other:[],filings:[]}, closeProfile:this.closeProfile, stop:this.stop,
+      // copy
+      signalsIntro:'Federal press releases, fund investments and project designations naming a publicly traded company — cross-matched against disclosed holdings.',
+      alphaIntro:'Canada has no STOCK Act — the registry gives holdings snapshots, never trades or amounts. These are the federal datasets that do publish tradeable detail.',
+      footTape:"The registry publishes no transaction values or trade dates — events are disclosure states, not confirmed buys/sells. 'No longer disclosed' can mean sale, transfer to trust, exemption, or falling below the threshold.",
+      footNoLonger:"'No longer disclosed' can mean a sale, transfer to a blind trust, exemption, or the holding falling below the reporting threshold — not necessarily a sale.",
+      footProfile:"'Since' measures the security from the disclosure date, not the filer's purchase date — the registry reports neither trade dates nor amounts. sp = spouse's asset.",
+      footer:'Sources: CIEC Public Registry · SEDI · Registry of Lobbyists · CanadaBuys · Canada.ca newsroom. Independent tool — not a Government of Canada site. Public data; not investment advice.',
+    };
+  }
+}
+
+window.__mountBlindTrust(Component);
+</script>
+</body>
+</html>
