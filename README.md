@@ -31,6 +31,29 @@ Outputs in `data/`: `registry.json`, `tape.json`, `holdings.json`,
    (raw.githubusercontent.com sends `Access-Control-Allow-Origin: *`, so the
    front end can fetch it directly — no server needed.)
 
+## Front end (`docs/`)
+
+`docs/index.html` is the Blind Trust app: a single self-contained page (no
+build step, no dependencies) that reads the pipeline's JSON directly from
+`raw.githubusercontent.com` and falls back to baked sample data when the feed
+is unreachable. It has five views — Tape, Holdings, Signals, Alpha, Filings —
+plus search, a filter sheet, per-filer profiles, and a "new since last visit"
+notifications panel.
+
+- **View it locally**: open `docs/index.html` in a browser, or serve the folder
+  (`python3 -m http.server` from `docs/`).
+- **Publish it free** with GitHub Pages: Settings → Pages → *Deploy from a
+  branch* → `main` / `/docs`. The app fetches data over the absolute raw URL,
+  so it works from any origin.
+- **Repoint it**: the data source is the `BASE` constant near the top of the
+  inline `<script>` in `docs/index.html`.
+
+The page was generated from the `Blind Trust.dc.html` Claude Design comp; the
+comp's data logic is embedded verbatim, wrapped in a tiny dependency-free
+runtime (a `{{ }}`/`sc-if`/`sc-for` interpreter plus the `CompanyLogo` and
+`Avatar` components) so it runs standalone. Company logos load from Clearbit at
+runtime with a monogram fallback.
+
 ## Self-maintenance design
 
 - **Incremental + idempotent**: `state.json` tracks seen declaration IDs; runs
