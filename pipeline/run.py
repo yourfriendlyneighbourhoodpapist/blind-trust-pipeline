@@ -114,18 +114,46 @@ def run_registry(force_backfill: bool = False) -> None:
              len(new), len(registry), need_deep)
 
 
+def _window_days() -> int:
+    """Length of the scan window: from `since_date` to today, or `news_days`."""
+    if SINCE_DATE:
+        try:
+            from datetime import date as _date
+            y, m, d = (int(x) for x in SINCE_DATE.split("-"))
+            return (_date.today() - _date(y, m, d)).days + 1
+        except Exception:  # noqa: BLE001
+            pass
+    return int(CONFIG.get("news_days", 45))
+
+
 def run_altdata() -> None:
     registry = load_json("registry.json", [])
-    signals = altdata.newsroom(COMPANY_TERMS, days=int(CONFIG.get("news_days", 45)))
-    # attach disclosed holders to each announcement
     holders = _holders_by_ticker(registry)
-    for s in signals:
-        s["holders"] = sorted({h for t in s["companies"] for h in holders.get(t, [])})
+    win = _window_days()
+
+    # Government releases naming a tracked company, scanned back to since_date.
+    signals = altdata.newsroom(COMPANY_TERMS, days=win, since=SINCE_DATE)
+    lobby = altdata.lobbying(COMPANY_TERMS, days=win)
+    contracts = altdata.contracts(COMPANY_TERMS, days=win)
+    sedi = altdata.sedi(sorted(set(TICKER_MAP.values())))
+
+    # Enrich sparse newsroom hits with contract awards + lobbying spikes that
+    # name a disclosed-held company, so the Signals tab is substantive.
+    signals += extract.derived_signals(contracts, lobby, holders)
+    for s in signals:  # attach the disclosed filers who hold a named company
+        tickers = extract._sig_tickers(s)
+        s["holders"] = sorted({h for t in tickers for h in holders.get(t, [])})
+    # de-dup by (date, title) and present newest first
+    seen, uniq = set(), []
+    for s in sorted(signals, key=lambda x: x.get("date", ""), reverse=True):
+        key = (s.get("date", ""), s.get("title", ""))
+        if key in seen:
+            continue
+        seen.add(key)
+        uniq.append(s)
+    signals = uniq
     save_json("signals.json", signals)
 
-    lobby = altdata.lobbying(COMPANY_TERMS, days=90)
-    contracts = altdata.contracts(COMPANY_TERMS, days=120)
-    sedi = altdata.sedi(sorted(set(TICKER_MAP.values())))
     gfi = extract.favour_index(signals, lobby, contracts, sedi, holders)
     save_json("alpha.json", {"gfi": gfi, "sedi": sedi, "lobby": lobby,
                              "contracts": contracts})
@@ -145,18 +173,23 @@ def run_prices() -> None:
 
 
 def run_photos() -> None:
-    """Refresh data/photos.json (normalized name -> headshot URL). Fail-soft:
-    if a source errors we keep whatever we already had, so the app degrades to
-    initials rather than losing existing photos."""
+    """Refresh data/photos.json (name -> headshot URL) and data/roster.json
+    (name -> {chamber, party, riding}). Fail-soft: if a source errors we keep
+    whatever we already had, so the app degrades gracefully."""
     from scrapers import photos
-    existing = load_json("photos.json", {})
-    fresh = photos.fetch_all()
-    if fresh:
-        merged = {**existing, **fresh}  # new/updated win; stale entries retained
-        save_json("photos.json", merged)
-        log.info("Photos: %d names total (%d fetched this run)", len(merged), len(fresh))
+    old_photos = load_json("photos.json", {})
+    old_roster = load_json("roster.json", {})
+    fresh_photos, fresh_roster = photos.fetch()
+    if fresh_photos:
+        save_json("photos.json", {**old_photos, **fresh_photos})
     else:
-        log.warning("Photos: nothing fetched; keeping existing %d", len(existing))
+        log.warning("Photos: nothing fetched; keeping existing %d", len(old_photos))
+    if fresh_roster:
+        save_json("roster.json", {**old_roster, **fresh_roster})
+    else:
+        log.warning("Roster: nothing fetched; keeping existing %d", len(old_roster))
+    log.info("Photos/roster: %d photos, %d roster entries this run",
+             len(fresh_photos), len(fresh_roster))
 
 
 def main() -> None:

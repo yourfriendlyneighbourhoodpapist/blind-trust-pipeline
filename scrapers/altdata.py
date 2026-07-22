@@ -21,47 +21,69 @@ from .common import log, polite_get, session
 NEWS_API = "https://api.io.canada.ca/io-server/gc/news/en/v2"
 
 
-def newsroom(company_terms: dict[str, str], days: int = 30, pick: int = 300) -> list[dict]:
-    """company_terms: {search term -> ticker}. Returns releases whose
-    title/teaser mention a tracked company."""
-    sess = session()
-    try:
-        resp = polite_get(
-            sess, NEWS_API,
-            params={"experience": "products", "sort": "publishedDate",
-                    "orderBy": "desc", "pick": pick, "format": "json"},
-        )
-        items = resp.json().get("feed", {}).get("entry", [])
-    except Exception as exc:  # noqa: BLE001
-        log.warning("Newsroom API failed (%s); trying Atom fallback", exc)
-        try:
-            import feedparser
-            feed = feedparser.parse(
-                f"{NEWS_API}?experience=products&sort=publishedDate&orderBy=desc&pick={pick}&format=atom")
-            items = [{"title": e.get("title", ""), "teaser": e.get("summary", ""),
-                      "publishedDate": e.get("published", ""), "link": e.get("link", ""),
-                      "department": e.get("author", "")} for e in feed.entries]
-        except Exception as exc2:  # noqa: BLE001
-            log.error("Newsroom fallback failed: %s", exc2)
-            return []
+def _news_page(sess, pick: int, page: int) -> list[dict]:
+    resp = polite_get(sess, NEWS_API, params={
+        "experience": "products", "sort": "publishedDate", "orderBy": "desc",
+        "pick": pick, "page": page, "format": "json"})
+    return resp.json().get("feed", {}).get("entry", []) or []
 
-    cutoff = (date.today() - timedelta(days=days)).isoformat()
+
+def newsroom(company_terms: dict[str, str], days: int = 30, since: str | None = None,
+             pick: int = 500, max_pages: int = 40) -> list[dict]:
+    """company_terms: {search term -> ticker}. Returns releases whose
+    title/teaser name a tracked company, scanning back to ``since`` (YYYY-MM-DD)
+    or ``days`` ago. Pages the feed until it passes the cutoff; if the API does
+    not paginate, a repeated page yields no new links and the loop stops
+    (best-effort — releases naming a specific company are inherently sparse).
+    Companies are emitted as [{name, ticker}] for display + scoring."""
+    cutoff = since or (date.today() - timedelta(days=days)).isoformat()
+    sess = session()
+    items: list[dict] = []
+    seen_links: set = set()
+    for page in range(1, max_pages + 1):
+        try:
+            batch = _news_page(sess, pick, page)
+        except Exception as exc:  # noqa: BLE001
+            if page > 1:
+                break  # got some pages already; stop on later-page error
+            log.warning("Newsroom API failed (%s); trying Atom fallback", exc)
+            try:
+                import feedparser
+                feed = feedparser.parse(
+                    f"{NEWS_API}?experience=products&sort=publishedDate&orderBy=desc&pick={pick}&format=atom")
+                batch = [{"title": e.get("title", ""), "teaser": e.get("summary", ""),
+                          "publishedDate": e.get("published", ""), "link": e.get("link", ""),
+                          "department": e.get("author", "")} for e in feed.entries]
+            except Exception as exc2:  # noqa: BLE001
+                log.error("Newsroom fallback failed: %s", exc2)
+                return []
+        fresh = [it for it in batch if (it.get("link") or repr(it)) not in seen_links]
+        if not fresh:
+            break  # no pagination support / exhausted
+        for it in fresh:
+            seen_links.add(it.get("link") or repr(it))
+        items.extend(fresh)
+        oldest = min(((it.get("publishedDate") or "")[:10] for it in fresh
+                      if it.get("publishedDate")), default="")
+        if oldest and oldest < cutoff:
+            break
+
     hits = []
     for it in items:
         title = it.get("title", "") or ""
         teaser = it.get("teaser", "") or it.get("summary", "") or ""
         blob = f"{title} {teaser}"
-        matched = sorted({tkr for term, tkr in company_terms.items()
-                          if re.search(rf"\b{re.escape(term)}\b", blob, re.I)})
+        matched = {tkr: term for term, tkr in company_terms.items()
+                   if re.search(rf"\b{re.escape(term)}\b", blob, re.I)}
         pub = (it.get("publishedDate") or "")[:10]
         if matched and pub >= cutoff:
             hits.append({
                 "date": pub, "title": title.strip(),
                 "source": (it.get("department") or it.get("deptAcronym") or "Government of Canada"),
-                "url": it.get("link", ""), "teaser": teaser.strip()[:400],
-                "companies": matched,
+                "url": it.get("link", ""), "teaser": teaser.strip()[:400], "sector": "Announcement",
+                "companies": [{"name": term, "ticker": tkr} for tkr, term in sorted(matched.items())],
             })
-    log.info("Newsroom: %d matching releases", len(hits))
+    log.info("Newsroom: scanned %d releases since %s, %d matches", len(items), cutoff, len(hits))
     return hits
 
 

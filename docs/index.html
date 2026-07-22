@@ -124,52 +124,35 @@ html,body{min-height:100%}
 
     <!-- VIEW: HOLDINGS -->
     <sc-if value="{{ isHoldings }}">
-    <div style="animation:riseIn .45s ease both;margin-top:22px">
-      <sc-for list="{{ holdings }}" as="c" hint-placeholder-count="4">
-        <div style="margin-bottom:15px;border-radius:20px;padding:17px 17px 15px;background:linear-gradient(155deg,rgba(253,255,252,.17),rgba(253,255,252,.09));backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:inset 0 1px 0 rgba(253,255,252,.14),0 24px 60px rgba(0,20,0,.45),0 0 0 {{ c.ringW }}px rgba(180,209,99,{{ c.ring }})">
-          <div style="display:flex;align-items:center;gap:11px">
-            <div style="width:44px;height:44px;flex:none"><dc-import name="Avatar" initials="{{ c.person.initials }}" ring="{{ c.person.ring }}" photo="{{ c.person.photo }}" fs="15" hint-size="44px,44px"></dc-import></div>
-            <div style="flex:1;min-width:0">
-              <div onClick="{{ c.person.open }}" style="cursor:pointer;font-size:16px;font-weight:600;letter-spacing:-.02em">{{ c.person.name }}</div>
-              <div style="font-size:11px;color:#8C99A4">{{ c.person.roleLine }}</div>
+    <div style="animation:riseIn .45s ease both;margin-top:18px">
+      <div style="display:flex;gap:5px;padding:5px;border-radius:14px;background:rgba(0,20,0,.4);box-shadow:inset 0 1px 0 rgba(253,255,252,.06)">
+        <sc-for list="{{ holdCats }}" as="cat">
+          <button onClick="{{ cat.onClick }}" style="all:unset;cursor:pointer;flex:1;text-align:center;padding:9px 4px;border-radius:10px;font-size:12px;font-weight:600;line-height:1.25;background:{{ cat.bg }};color:{{ cat.fg }}">{{ cat.label }}<br><span style="font-size:11px;opacity:.7;font-weight:600">{{ cat.count }}</span></button>
+        </sc-for>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;margin:13px 2px 10px;flex-wrap:wrap">
+        <span style="font-size:11px;color:#8C99A4">{{ holdCount }}</span>
+        <div style="flex:1"></div>
+        <span style="font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#8C99A4">Sort</span>
+        <sc-for list="{{ holdSorts }}" as="so"><button onClick="{{ so.onClick }}" style="all:unset;cursor:pointer;padding:5px 10px;border-radius:9px;font-size:11.5px;font-weight:600;background:{{ so.bg }};color:{{ so.fg }}">{{ so.label }}</button></sc-for>
+      </div>
+      <div style="border-radius:16px;overflow:hidden;background:rgba(253,255,252,.05);box-shadow:inset 0 0 0 1px rgba(253,255,252,.08)">
+        <sc-for list="{{ roster }}" as="r" hint-placeholder-count="10">
+          <div onClick="{{ r.open }}" style="cursor:pointer;display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:center;padding:11px 13px;background:{{ r.zebra }}">
+            <div style="width:38px;height:38px;flex:none"><dc-import name="Avatar" initials="{{ r.initials }}" ring="{{ r.ring }}" photo="{{ r.photo }}" fs="13" hint-size="38px,38px"></dc-import></div>
+            <div style="min-width:0">
+              <div style="font-size:14px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }} <sc-if value="{{ r.isPM }}"><span style="font-size:9px;font-weight:700;color:#001400;background:#B4D163;padding:1px 5px;border-radius:5px">PM</span></sc-if></div>
+              <div style="font-size:11px;color:#8C99A4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.sub }}</div>
             </div>
-            <sc-if value="{{ c.hasSig }}"><span style="padding:5px 10px;border-radius:10px;background:rgba(180,209,99,.18);color:#B4D163;font-size:11px;font-weight:600;white-space:nowrap">◆ {{ c.signals }} signals</span></sc-if>
-          </div>
-
-          <sc-if value="{{ c.pmNote }}"><div style="margin-top:12px;padding:11px 13px;border-radius:13px;background:rgba(0,20,0,.4);font-size:12px;line-height:1.5;color:#c9c7bd">{{ c.pmNote }}</div></sc-if>
-
-          <sc-if value="{{ c.hasSec }}">
-            <div style="font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#8C99A4;margin:14px 0 7px">Disclosed securities</div>
-            <sc-for list="{{ c.securities }}" as="s" hint-placeholder-count="4">
-              <div style="display:flex;align-items:center;gap:9px;padding:7px 0;background:{{ s.zebra }}">
-                <div style="width:28px;height:28px;flex:none"><dc-import name="CompanyLogo" domain="{{ s.domain }}" ticker="{{ s.ticker }}" mono="{{ s.mono }}" hint-size="28px,28px"></dc-import></div>
-                <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.name }}</div><div style="font-size:10.5px;color:#8C99A4">{{ s.ticker }}</div></div>
-                <div style="display:flex;align-items:center;gap:6px"><sc-if value="{{ s.sp }}"><span style="font-size:9px;font-weight:700;color:#8C99A4;background:rgba(89,101,111,.25);padding:1px 4px;border-radius:5px">sp</span></sc-if><span style="font-size:12.5px;font-weight:600;color:{{ s.perfColor }};white-space:nowrap">{{ s.perfText }}</span></div>
-              </div>
-            </sc-for>
-          </sc-if>
-
-          <sc-if value="{{ c.hasMaterial }}">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">
-              <div>
-                <div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#B4D163;margin-bottom:7px">▲ Newly disclosed</div>
-                <sc-for list="{{ c.material.added }}" as="m" hint-placeholder-count="3"><div style="padding:4px 0"><div style="font-size:12px;font-weight:500">{{ m.name }}</div><div style="font-size:10px;color:#8C99A4">{{ m.ticker }} · {{ m.date }}</div></div></sc-for>
-                <sc-if value="{{ c.material.noneAdded }}"><div style="font-size:11.5px;color:#8C99A4">—</div></sc-if>
-              </div>
-              <div>
-                <div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#8C99A4;margin-bottom:7px">▼ No longer disclosed</div>
-                <sc-for list="{{ c.material.removed }}" as="m" hint-placeholder-count="3"><div style="padding:4px 0"><div style="font-size:12px;font-weight:500;color:#c9c7bd">{{ m.name }}</div><div style="font-size:10px;color:#8C99A4">{{ m.ticker }} · {{ m.date }}</div></div></sc-for>
-              </div>
+            <div style="text-align:right;flex:none;display:flex;align-items:center;gap:9px">
+              <div><div style="font-size:15px;font-weight:600;letter-spacing:-.02em">{{ r.secCount }}</div><div style="font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#8C99A4">sec.</div></div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8C99A4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><polyline points="9 6 15 12 9 18"></polyline></svg>
             </div>
-            <p style="font-size:11px;line-height:1.5;color:#8C99A4;margin:11px 0 0">{{ footNoLonger }}</p>
-          </sc-if>
-
-          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px">
-            <sc-for list="{{ c.tags }}" as="tg" hint-placeholder-count="2"><span style="padding:4px 9px;border-radius:9px;background:rgba(0,20,0,.4);font-size:10.5px;font-weight:500;color:#c9c7bd">{{ tg }}</span></sc-for>
           </div>
-        </div>
-      </sc-for>
-      <sc-if value="{{ holdingsEmpty }}"><div style="text-align:center;color:#8C99A4;font-size:13px;padding:40px 0">No filers match these filters.</div></sc-if>
+        </sc-for>
+      </div>
+      <sc-if value="{{ holdingsEmpty }}"><div style="text-align:center;color:#8C99A4;font-size:13px;padding:40px 0">No filers in this category match your search.</div></sc-if>
+      <p style="font-size:11px;line-height:1.5;color:#8C99A4;margin:13px 2px 0">Tap a filer to open their full disclosures — securities, material changes, other assets and filings. Only filers with disclosed assets are listed. Senators are tagged from the Senate roster; unmatched office holders appear under Public office holders.</p>
     </div>
     </sc-if>
 
@@ -257,7 +240,8 @@ html,body{min-height:100%}
 
     <!-- VIEW: FILINGS -->
     <sc-if value="{{ isFilings }}">
-    <div style="animation:riseIn .45s ease both;margin-top:22px">
+    <div style="animation:riseIn .45s ease both;margin-top:18px">
+      <div style="display:flex;align-items:baseline;gap:8px;margin:0 2px 12px"><span style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#8C99A4">{{ filingCount }} filings</span><span style="font-size:11px;color:#6f7a5e">· newest first · use Filters to query</span></div>
       <sc-for list="{{ filings }}" as="f" hint-placeholder-count="6">
         <div style="margin-bottom:14px;border-radius:20px;padding:16px 17px;background:linear-gradient(155deg,rgba(253,255,252,.17),rgba(253,255,252,.09));backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:inset 0 1px 0 rgba(253,255,252,.14),0 24px 60px rgba(0,20,0,.45)">
           <div style="display:flex;align-items:flex-start;gap:10px">
@@ -664,7 +648,7 @@ html,body{min-height:100%}
 
 
 class Component extends DCLogic {
-  state = { view:'tape', showFilters:false, showNotif:false, profileId:null, q:'', pmOnly:false, secOnly:false, declType:'All', otherDoc:'All', role:'All', status:'All', sortBy:'Disclosure date', order:'desc', dateFrom:'', dateTo:'', notifRead:false, tapeShown:20 };
+  state = { view:'tape', showFilters:false, showNotif:false, profileId:null, q:'', pmOnly:false, secOnly:false, declType:'All', otherDoc:'All', role:'All', status:'All', sortBy:'Disclosure date', order:'desc', dateFrom:'', dateTo:'', notifRead:false, tapeShown:20, holdCat:'MP', holdSort:'Securities' };
 
   constructor(props){ super(props); const m={Tape:'tape',Holdings:'holdings',Signals:'signals',Alpha:'alpha',Filings:'filings'}; const dv=m[props&&props.defaultView]; if(dv) this.state.view=dv; this.state.dataSource='sample'; }
 
@@ -689,6 +673,7 @@ class Component extends DCLogic {
     // Headshots load independently of the registry feed so photos still appear
     // even if a data file is slow or unavailable.
     this.getJSON(this.BASE+'photos.json').then(p=>{ if(p&&typeof p==='object'){ this.PHOTOS=p; this.forceUpdate(); } }).catch(()=>{});
+    this.getJSON(this.BASE+'roster.json').then(r=>{ if(r&&typeof r==='object'){ this.ROSTER=r; this.forceUpdate(); } }).catch(()=>{});
     Promise.all([
       this.getJSON(this.BASE+'prices.json').catch(()=>null),
       this.getJSON(this.BASE+'holdings.json'),
@@ -935,7 +920,16 @@ class Component extends DCLogic {
   clearFilters = () => this.setState({ q:'', pmOnly:false, secOnly:false, declType:'All', otherDoc:'All', role:'All', status:'All', dateFrom:'', dateTo:'', sortBy:'Disclosure date', order:'desc', tapeShown:20 });
   stop = (e) => e.stopPropagation();
 
-  ring(id){ const p=this.PEOPLE[id]; return p.party==='NA'?this.PARTY.NA:(this.PARTY[p.party]||this.PARTY.NA); }
+  ROSTER = {};
+  _roster(name){ return this.ROSTER[this._pnorm(name)] || null; }
+  _partyOf(id){ const p=this.PEOPLE[id]; if(!p) return 'NA'; const r=this._roster(p.name); return (r&&r.party) || p.party || 'NA'; }
+  _riding(id){ const p=this.PEOPLE[id]; const r=p&&this._roster(p.name); return (r&&r.riding) || ''; }
+  // Category for the Holdings picker: chamber from the roster is authoritative;
+  // otherwise fall back to the registry role (elected roles -> MP, else POH).
+  _category(id){ const p=this.PEOPLE[id]; if(!p) return 'POH'; const r=this._roster(p.name);
+    if(r) return r.chamber==='senate' ? 'Senator' : 'MP';
+    return /Members of Parliament|Ministers|Parliamentary Secretaries/.test(p.roleType||'') ? 'MP' : 'POH'; }
+  ring(id){ const party=this._partyOf(id); return party==='NA'?this.PARTY.NA:(this.PARTY[party]||this.PARTY.NA); }
   dom(t){ return t?(this.DOMAINS[t]||''):''; }
   mono(name,t){ if(t) return t.replace(/\..*$/,'').replace(/[^A-Za-z]/g,'').slice(0,2).toUpperCase()||'?'; return (name||'?').replace(/[^A-Za-z]/g,'').slice(0,2).toUpperCase()||'?'; }
   perf(v){ if(v==null) return {t:'—',c:'#8C99A4',d:'#59656F'}; const pos=v>=0; return { t:(pos?'+':'')+v.toFixed(1)+'%', c:pos?'#B4D163':'#E8A24A', d:pos?'#3a5a12':'#9a6a1e' }; }
@@ -1010,30 +1004,52 @@ class Component extends DCLogic {
     const tapeTotal = tape.length;
     tape = tape.slice(0, st.tapeShown).map((r,i)=>({ ...r, zebra:zebra(i) }));
 
-    // ---- HOLDINGS ----
+    // ---- HOLDINGS (browsable index: category -> person -> disclosures) ----
     const bakedDD = id => id==='carney'?'2025-07-11':(id==='koutrakis'?'2026-07-08':id==='elkhoury'?'2026-07-06':(id==='costen'?'2026-07-04':''));
     const ddFor = id => (this.DDATE && this.DDATE[id]) || bakedDD(id);
-    const bakedTags = { carney:['Compliance Measures (Act)','Declarable Assets'], koutrakis:['Disclosure Summary (Code)','Material Change'], elkhoury:['Disclosure Summary (Code)'], costen:['Summary Statement (Act)'] };
-    const cardIds = (this.holdingsOrder && this.holdingsOrder.length) ? this.holdingsOrder : ['carney','koutrakis','elkhoury','costen'];
-    let holdings = cardIds.filter(id=>P[id]).map(id => {
-      const hold=(this.HOLDINGS[id]||[]).map(h=>sec(h, ddFor(id)));
-      const mat=this.MATERIAL[id];
-      const tags = (this.TAGS && this.TAGS[id]) ? this.TAGS[id] : (bakedTags[id]||[]);
-      const sig=this.SIGCOUNT[id]||0;
-      return { id, person:person(id), isPM:P[id].isPM, ring:P[id].isPM?0.5:0, ringW:P[id].isPM?2:0, signals:sig, hasSig:sig>0,
-        pmNote: P[id].isPM ? 'Holdings in a blind trust — contents not publicly itemized. Screens and disclosed stock options are shown in the profile.' : '',
-        hasSec: hold.length>0, securities: hold.map((s,i)=>({ ...s, zebra:zebra(i) })),
-        hasMaterial: !!mat, material: mat?{ added:mat.added.map(a=>({ ...chg(a), date:mat.date })), removed:mat.removed.map(r=>({ ...chg(r), date:mat.date })), noneAdded:mat.added.length===0 }:{ added:[], removed:[], noneAdded:true },
-        tags };
+    // Everyone who has disclosed securities or a material change — uncapped.
+    const hasAssets = id => (this.HOLDINGS[id]&&this.HOLDINGS[id].length) || this.MATERIAL[id];
+    const allIds = Object.keys(P).filter(id => hasAssets(id));
+    const catCount = { MP:0, Senator:0, POH:0 };
+    allIds.forEach(id => { catCount[this._category(id)]++; });
+    const catLabels = [['MP','Members of Parliament'],['Senator','Senators'],['POH','Public office holders']];
+    const holdCats = catLabels.map(([key,label]) => ({ label, count:catCount[key]||0,
+      onClick:()=>this.setState({holdCat:key}),
+      bg: st.holdCat===key ? '#B4D163' : 'transparent', fg: st.holdCat===key ? '#001400' : '#c9c7bd' }));
+    const holdSorts = ['Securities','Name','Last filing'].map(label => ({ label,
+      onClick:()=>this.setState({holdSort:label}),
+      bg: st.holdSort===label ? 'rgba(180,209,99,.9)' : 'rgba(0,20,0,.4)', fg: st.holdSort===label ? '#001400' : '#c9c7bd' }));
+    let rosterRows = allIds.filter(id => this._category(id)===st.holdCat).map(id => {
+      const secCount=(this.HOLDINGS[id]||[]).length; const last=ddFor(id);
+      const riding=this._riding(id); const roleShort=(P[id].roleLine||'').split(' · ')[0];
+      const subL=[riding||roleShort, last?('filed '+last):''].filter(Boolean).join(' · ');
+      return { id, name:P[id].name, initials:P[id].initials, ring:this.ring(id), photo:this._photo(P[id].name),
+        isPM:!!P[id].isPM, secCount, last, sub:subL, open:()=>this.openProfile(id), _n:P[id].name.toLowerCase() };
     });
-    if(st.pmOnly) holdings = holdings.filter(c=>c.isPM);
-    if(st.secOnly) holdings = holdings.filter(c=>c.hasSec);
-    if(q) holdings = holdings.filter(c=>c.person.name.toLowerCase().includes(q));
+    if(st.pmOnly) rosterRows = rosterRows.filter(r=>r.isPM);
+    if(q) rosterRows = rosterRows.filter(r=>r._n.includes(q) || r.sub.toLowerCase().includes(q));
+    const lastName = n => n.trim().split(/\s+/).slice(-1)[0].toLowerCase();
+    rosterRows.sort((a,b)=> st.holdSort==='Securities' ? (b.secCount-a.secCount || lastName(a.name).localeCompare(lastName(b.name)))
+      : st.holdSort==='Last filing' ? ((a.last<b.last?1:a.last>b.last?-1:0) || lastName(a.name).localeCompare(lastName(b.name)))
+      : lastName(a.name).localeCompare(lastName(b.name)) );
+    const roster = rosterRows.map((r,i)=>({ ...r, zebra:zebra(i) }));
+    const holdCount = `${roster.length} filer${roster.length===1?'':'s'} with disclosed assets`;
 
-    // ---- SIGNALS ----
-    const signals = this.SIGNALS.map(s => ({ source:s.source, date:s.date, title:s.title, sector:s.sector, note:s.note||'',
-      companies:s.companies.map(([n,t])=>({ ticker:t, name:n, domain:this.dom(t), mono:this.mono(n,t) })),
-      holders:s.holders.map(([pid,tks,date,sp])=>({ name:P[pid].name, initials:P[pid].initials, ring:this.ring(pid), photo:this._photo(P[pid].name), open:()=>this.openProfile(pid), tickers:tks.join(', '), date, sp })) }));
+    // ---- SIGNALS (handles baked array-pairs and live {name,ticker}/{person} objects) ----
+    const signals = this.SIGNALS.map(s => {
+      const companies = (s.companies||[]).map(c => {
+        const name = Array.isArray(c) ? c[0] : (c.name||c.company||'');
+        const t    = Array.isArray(c) ? c[1] : (c.ticker||'');
+        return { ticker:t||'', name, domain:this.dom(t), mono:this.mono(name,t) };
+      });
+      const holders = (s.holders||[]).map(h => {
+        if(Array.isArray(h)){ const [pid,tks,date,sp]=h; const p=P[pid]||{};
+          return { name:p.name||pid, initials:p.initials||this._inits(p.name||pid), ring:this.ring(pid), photo:this._photo(p.name||''), open:()=>this.openProfile(pid), tickers:(tks||[]).join(', '), date:date||'', sp:!!sp }; }
+        const pid=h.key||this._slug(h.person||h.name||''); const nm=h.person||h.name||(P[pid]&&P[pid].name)||'';
+        return { name:nm, initials:this._inits(nm), ring:this.ring(pid), photo:this._photo(nm), open:()=>this.openProfile(pid), tickers:(h.tickers||[]).join(', '), date:h.date||'', sp:!!h.sp };
+      });
+      return { source:s.source, date:s.date, title:s.title, sector:s.sector, note:s.note||'', companies, holders };
+    });
 
     // ---- ALPHA ----
     const gfiMax=Math.max(...this.GFI.map(g=>g[1]));
@@ -1110,8 +1126,8 @@ class Component extends DCLogic {
       dateNote: st.dataSource==='live' ? ((this.liveDate||'live')+' · live CIEC pipeline') : (st.dataSource==='loading' ? 'syncing live pipeline…' : '2026-07-13 · sample data'),
       // data
       mosaic, treeH, tape, tapeHasMore: tapeTotal > st.tapeShown, tapeMoreCount: Math.min(20, Math.max(0, tapeTotal - st.tapeShown)), loadMoreTape:this.loadMoreTape,
-      holdings, holdingsEmpty:holdings.length===0, signals, gfi, sedi, lobby, contracts,
-      filings:filingCards, filingsEmpty:filingCards.length===0,
+      holdCats, holdSorts, roster, holdCount, holdingsEmpty:roster.length===0, signals, gfi, sedi, lobby, contracts,
+      filings:filingCards, filingCount:filingCards.length, filingsEmpty:filingCards.length===0,
       groups, legend, dateFrom:st.dateFrom, dateTo:st.dateTo, onDateFrom:this.onDateFrom, onDateTo:this.onDateTo,
       // profile
       hasProfile:!!prof, prof:prof||{stats:[],securities:[],material:{added:[],removed:[]},other:[],filings:[]}, closeProfile:this.closeProfile, stop:this.stop,
