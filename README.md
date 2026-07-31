@@ -9,13 +9,18 @@ CIEC filings appear. Zero servers, zero cost on a public repo.
 | Task | Schedule | What it does |
 |---|---|---|
 | `registry` | every 6 h | Scrapes the CIEC public registry newest-first, stops at the first already-seen page, extracts securities + material-change diffs, emails alerts |
-| `altdata` | nightly | Canada.ca newsroom (announcement matching), Registry of Lobbyists comms counts, CanadaBuys contract awards, Government Favour Index |
+| `altdata` | nightly | Newsroom announcements + contract awards + lobbying spikes naming disclosed-held companies → Signals; Government Favour Index. Scanned back to `since_date` |
 | `prices` | nightly | % change since disclosure date per matched ticker (yfinance) |
-| `photos` | nightly | MP & Senator headshot URLs → `photos.json` (see [Headshots](#headshots)) |
+| `photos` | nightly | MP & Senator headshots → `photos.json` and chamber/party/riding → `roster.json` (see [Headshots & roster](#headshots--roster)) |
 | `backfill` | manual | One-time deep sweep of the whole `since_date` window (below) |
 
 Outputs in `data/`: `registry.json`, `tape.json`, `holdings.json`,
-`signals.json`, `alpha.json`, `prices.json`, `photos.json`, `state.json`.
+`signals.json`, `alpha.json`, `prices.json`, `photos.json`, `roster.json`,
+`state.json`.
+
+Signals coverage is source-limited: government releases naming a specific
+public company are inherently sparse even scanned back to the start date, so
+the tab is filled out with the contract-award and lobbying matches above.
 
 ### Coverage window (45th Parliament)
 
@@ -57,7 +62,10 @@ more" control and shows each stock's move since its disclosure date (green up /
 amber down); "Most widely disclosed" is a proportional treemap where each
 tile's area tracks its disclosure count; and avatars show official MP/Senator
 headshots (from `photos.json`) inside a party-coloured ring, falling back to
-initials.
+initials. **Holdings** is a browsable index rather than a feed: pick a category
+— Members of Parliament / Senators / Public office holders (chamber from
+`roster.json`) — then sort the roster (by # securities, name, or last filing)
+and tap a filer to open their full disclosures.
 
 - **View it locally**: open `docs/index.html` in a browser, or serve the folder
   (`python3 -m http.server` from `docs/`).
@@ -104,11 +112,14 @@ stateful Java UI; reliable automation needs a headless browser or a vendor
 feed. When you pick one, implement it there — the GFI already consumes its
 output shape (`{date, ticker, insider, tx, value}`).
 
-## Headshots
+## Headshots & roster
 
-`scrapers/photos.py` builds `data/photos.json` — a map of `normalized name →
-photo URL` — fetched server-side (in CI) so the static app never makes a
-cross-origin request for it. The app deburrs/normalizes each filer's name the
+`scrapers/photos.py` builds two files, both fetched server-side (in CI) so the
+static app never makes a cross-origin request: `data/photos.json` (`normalized
+name → photo URL`) and `data/roster.json` (`normalized name → {chamber, party,
+riding}`). The roster gives the app authoritative chamber (to split the Holdings
+picker into MPs / Senators / Public office holders) and party (for the avatar
+ring), replacing hand-maintained overrides. The app deburrs/normalizes each filer's name the
 same way and drops the matching URL into the avatar, falling back to initials
 when there's no match (staff and appointees generally have none).
 

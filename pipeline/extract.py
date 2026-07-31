@@ -134,20 +134,68 @@ def match_ticker(name: str, ticker_map: dict[str, str]) -> str | None:
     return None
 
 
+def _sig_tickers(signal) -> list[str]:
+    """Tickers named by a signal, whether companies are ticker strings or
+    {name, ticker} objects."""
+    out = []
+    for c in signal.get("companies", []):
+        t = c if isinstance(c, str) else (c.get("ticker") or c.get("name"))
+        if t:
+            out.append(t)
+    return out
+
+
+def derived_signals(contracts, lobby, holders_by_ticker) -> list[dict]:
+    """Turn federal contract awards and lobbying spikes that name a
+    disclosed-held company into Signals entries, so the tab reflects the whole
+    window rather than only the (sparse) newsroom name-matches. Company shape
+    mirrors newsroom: [{name, ticker}]; holders are disclosed filer names."""
+    out = []
+    for c in contracts:
+        tkr = c.get("ticker")
+        held = holders_by_ticker.get(tkr, []) if tkr else []
+        if not held:
+            continue  # only surface awards to companies a filer actually holds
+        dept = c.get("dept", "")
+        out.append({
+            "date": c.get("date", ""), "source": "CanadaBuys",
+            "title": f"{c.get('co', 'Tracked company')} awarded a federal contract"
+                     + (f" — {dept}" if dept else ""),
+            "sector": "Federal contract",
+            "companies": [{"name": c.get("co", ""), "ticker": tkr}],
+            "url": "", "teaser": (c.get("desc") or "")[:400], "holders": held,
+            "note": (f"Award value: {c.get('value')}." if c.get("value") else ""),
+        })
+    for l in lobby:
+        tkr = l.get("ticker")
+        held = holders_by_ticker.get(tkr, []) if tkr else []
+        if not held or l.get("comms", 0) < 10:
+            continue  # only notable lobbying volume
+        out.append({
+            "date": "", "source": "Registry of Lobbyists",
+            "title": f"{l.get('co', 'Tracked company')} — {l.get('comms')} lobbying communications",
+            "sector": "Lobbying",
+            "companies": [{"name": l.get("co", ""), "ticker": tkr}],
+            "url": "", "teaser": l.get("topInst", ""), "holders": held,
+            "note": (f"Top institutions: {l.get('topInst')}." if l.get("topInst") else ""),
+        })
+    return out
+
+
 def favour_index(signals, lobby, contracts, sedi, holders_by_ticker) -> list[dict]:
     """Composite Government Favour Index per ticker. Transparent weights;
     every component is listed so the app can footnote the math."""
     tickers = set(holders_by_ticker)
-    for coll, key in ((signals, "companies"), (lobby, None), (contracts, None), (sedi, None)):
+    for s in signals:
+        tickers.update(_sig_tickers(s))
+    for coll in (lobby, contracts, sedi):
         for item in coll:
-            if key:
-                tickers.update(item.get(key, []))
-            elif item.get("ticker"):
+            if item.get("ticker"):
                 tickers.add(item["ticker"])
     out = []
     lob = {r["ticker"]: r for r in lobby}
     for tkr in tickers:
-        ann = sum(1 for s in signals if tkr in s.get("companies", []))
+        ann = sum(1 for s in signals if tkr in _sig_tickers(s))
         con = [c for c in contracts if c.get("ticker") == tkr]
         comms = lob.get(tkr, {}).get("comms", 0)
         buys = sum(1 for s in sedi if s.get("ticker") == tkr and s.get("tx") == "Buy")
