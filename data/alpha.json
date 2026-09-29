@@ -19,7 +19,12 @@
   {
    "parts": "held by 4 filers",
    "score": 20,
-   "ticker": "BN.TO"
+   "ticker": "T.TO"
+  },
+  {
+   "parts": "held by 4 filers",
+   "score": 20,
+   "ticker": "SU.TO"
   },
   {
    "parts": "held by 4 filers",
@@ -29,22 +34,17 @@
   {
    "parts": "held by 4 filers",
    "score": 20,
-   "ticker": "T.TO"
-  },
-  {
-   "parts": "held by 4 filers",
-   "score": 20,
-   "ticker": "SU.TO"
-  },
-  {
-   "parts": "held by 3 filers",
-   "score": 15,
-   "ticker": "TRP.TO"
+   "ticker": "BN.TO"
   },
   {
    "parts": "held by 3 filers",
    "score": 15,
    "ticker": "TSLA"
+  },
+  {
+   "parts": "held by 3 filers",
+   "score": 15,
+   "ticker": "CSU.TO"
   },
   {
    "parts": "held by 3 filers",
@@ -59,12 +59,7 @@
   {
    "parts": "held by 3 filers",
    "score": 15,
-   "ticker": "CSU.TO"
-  },
-  {
-   "parts": "held by 2 filers",
-   "score": 10,
-   "ticker": "BAM"
+   "ticker": "TRP.TO"
   },
   {
    "parts": "held by 2 filers",
@@ -79,12 +74,12 @@
   {
    "parts": "held by 2 filers",
    "score": 10,
-   "ticker": "EFN.TO"
+   "ticker": "CCO.TO"
   },
   {
    "parts": "held by 2 filers",
    "score": 10,
-   "ticker": "CCO.TO"
+   "ticker": "NTR.TO"
   },
   {
    "parts": "held by 2 filers",
@@ -99,7 +94,7 @@
   {
    "parts": "held by 2 filers",
    "score": 10,
-   "ticker": "NTR.TO"
+   "ticker": "EFN.TO"
   },
   {
    "parts": "held by 2 filers",
@@ -109,7 +104,17 @@
   {
    "parts": "held by 2 filers",
    "score": 10,
+   "ticker": "BAM"
+  },
+  {
+   "parts": "held by 2 filers",
+   "score": 10,
    "ticker": "MFC.TO"
+  },
+  {
+   "parts": "held by 1 filer",
+   "score": 5,
+   "ticker": "CNQ.TO"
   },
   {
    "parts": "held by 1 filer",
@@ -119,27 +124,7 @@
   {
    "parts": "held by 1 filer",
    "score": 5,
-   "ticker": "PPL.TO"
-  },
-  {
-   "parts": "held by 1 filer",
-   "score": 5,
    "ticker": "SLF.TO"
-  },
-  {
-   "parts": "held by 1 filer",
-   "score": 5,
-   "ticker": "QSR.TO"
-  },
-  {
-   "parts": "held by 1 filer",
-   "score": 5,
-   "ticker": "TFII.TO"
-  },
-  {
-   "parts": "held by 1 filer",
-   "score": 5,
-   "ticker": "CP.TO"
   },
   {
    "parts": "held by 1 filer",
@@ -149,12 +134,27 @@
   {
    "parts": "held by 1 filer",
    "score": 5,
+   "ticker": "CP.TO"
+  },
+  {
+   "parts": "held by 1 filer",
+   "score": 5,
+   "ticker": "PPL.TO"
+  },
+  {
+   "parts": "held by 1 filer",
+   "score": 5,
+   "ticker": "TFII.TO"
+  },
+  {
+   "parts": "held by 1 filer",
+   "score": 5,
    "ticker": "BCE.TO"
   },
   {
    "parts": "held by 1 filer",
    "score": 5,
-   "ticker": "CNQ.TO"
+   "ticker": "QSR.TO"
   }
  ],
  "lobby": [],
